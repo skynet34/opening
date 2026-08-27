@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Koru Florya Açılış Takip</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+
+<style>
+:root{
+  --bg:#07131f;
+  --panel:#0d2030;
+  --panel2:#112b3d;
+  --line:rgba(255,255,255,.12);
+  --text:#eef7ff;
+  --muted:#9eb4c5;
+  --green:#4ade80;
+  --blue:#60a5fa;
+  --yellow:#facc15;
+  --orange:#fb923c;
+  --red:#fb7185;
+  --gray:#64748b;
+  --cyan:#22d3ee;
+  --shadow:0 18px 45px rgba(0,0,0,.32);
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:Arial,Helvetica,sans-serif;
+  background:
+    radial-gradient(circle at 15% 0%,rgba(34,211,238,.13),transparent 30%),
+    linear-gradient(145deg,#081723,#04101a 68%,#02070b);
+  color:var(--text);
+}
+.wrap{width:min(1480px,calc(100% - 28px));margin:auto;padding:22px 0 46px}
+.hero{
+  border:1px solid rgba(34,211,238,.24);
+  border-radius:24px;
+  padding:20px;
+  background:linear-gradient(135deg,rgba(17,43,61,.96),rgba(5,19,31,.96));
+  box-shadow:var(--shadow);
+}
+.heroTop{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap}
+h1{margin:0;color:#8ff7ff;font-size:clamp(26px,3.2vw,40px)}
+.subtitle{color:#c9d7e2;margin-top:7px;font-weight:700;line-height:1.45}
+.sync{font-size:12px;color:var(--muted);margin-top:8px}
+.search{
+  min-width:min(360px,100%);
+  border:1px solid var(--line);
+  background:#081927;
+  color:#fff;
+  border-radius:13px;
+  padding:12px 14px;
+  font-size:14px;
+  outline:none;
+}
+.summary{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(145px,1fr));
+  gap:10px;
+  margin:14px 0;
+}
+.kpi{
+  border:1px solid var(--line);
+  border-radius:17px;
+  padding:13px 14px;
+  background:rgba(255,255,255,.055);
+  box-shadow:0 10px 24px rgba(0,0,0,.20);
+  cursor:pointer;
+  transition:.15s;
+  color:#fff;
+  text-align:left;
+}
+.kpi:hover{transform:translateY(-2px);filter:brightness(1.08)}
+.kpi b{display:block;font-size:28px}
+.kpi span{font-size:11px;font-weight:900;text-transform:uppercase;color:#dce8f0}
+.kpi.ready{border-color:rgba(74,222,128,.45);background:rgba(74,222,128,.11)}
+.kpi.stock{border-color:rgba(96,165,250,.45);background:rgba(96,165,250,.11)}
+.kpi.delay{border-color:rgba(251,113,133,.48);background:rgba(251,113,133,.10)}
+.kpi.unknown{border-color:rgba(250,204,21,.40);background:rgba(250,204,21,.08)}
+
+.floorTabs{
+  display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 16px;
+}
+.floorBtn{
+  border:1px solid var(--line);
+  background:#0d2030;
+  color:#dce8f0;
+  border-radius:999px;
+  padding:9px 13px;
+  font-weight:900;
+  cursor:pointer;
+}
+.floorBtn.active{background:var(--cyan);color:#03212a;border-color:var(--cyan)}
+
+.floorSection{
+  margin:18px 0 24px;
+  border:1px solid rgba(255,255,255,.11);
+  background:rgba(9,27,41,.76);
+  border-radius:22px;
+  overflow:hidden;
+  box-shadow:var(--shadow);
+}
+.floorHead{
+  display:flex;justify-content:space-between;gap:12px;align-items:center;
+  padding:14px 16px;
+  border-bottom:1px solid var(--line);
+  background:linear-gradient(90deg,rgba(34,211,238,.13),rgba(255,255,255,.02));
+}
+.floorHead h2{margin:0;color:#8ff7ff;font-size:22px}
+.floorMeta{color:var(--muted);font-size:12px;font-weight:800}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(275px,1fr));
+  gap:11px;
+  padding:13px;
+}
+.storeCard{
+  position:relative;
+  border:1px solid var(--line);
+  border-left:8px solid var(--gray);
+  border-radius:17px;
+  padding:13px;
+  background:linear-gradient(145deg,rgba(255,255,255,.06),rgba(0,0,0,.11));
+  min-height:175px;
+}
+.storeCard.ready{border-left-color:var(--green)}
+.storeCard.stocking{border-left-color:var(--blue)}
+.storeCard.delayed{border-left-color:var(--red)}
+.storeCard.unknown{border-left-color:var(--yellow)}
+
+.storeName{font-size:18px;font-weight:950;line-height:1.12;padding-right:5px}
+.meta{color:var(--muted);font-size:12px;font-weight:850;margin-top:5px}
+.stateLine{margin:10px 0 9px}
+.statePill{
+  display:inline-flex;
+  border-radius:999px;
+  padding:6px 9px;
+  font-size:11px;
+  font-weight:950;
+  border:1px solid var(--line);
+}
+.statePill.ready{background:rgba(74,222,128,.14);color:#bff8d1;border-color:rgba(74,222,128,.35)}
+.statePill.stocking{background:rgba(96,165,250,.15);color:#cae2ff;border-color:rgba(96,165,250,.38)}
+.statePill.delayed{background:rgba(251,113,133,.14);color:#ffd1da;border-color:rgba(251,113,133,.38)}
+.statePill.unknown{background:rgba(250,204,21,.11);color:#fff0a6;border-color:rgba(250,204,21,.30)}
+
+.actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px}
+.actions button{
+  border:0;border-radius:10px;padding:9px 6px;cursor:pointer;font-size:11px;font-weight:950;
+}
+.btnReady{background:var(--green);color:#062413}
+.btnStock{background:var(--blue);color:#071d35}
+.btnDelay{background:var(--red);color:#350711}
+.actions button.inactive{opacity:.38;filter:saturate(.55)}
+.delayBox{margin-top:8px}
+.delayBox select,.delayBox input{
+  width:100%;
+  border:1px solid rgba(251,113,133,.32);
+  background:#091925;
+  color:#fff;
+  border-radius:10px;
+  padding:9px 10px;
+  font-weight:800;
+}
+.noteInput{
+  width:100%;
+  margin-top:7px;
+  border:1px solid var(--line);
+  background:#081927;
+  color:#fff;
+  border-radius:10px;
+  padding:8px 9px;
+  font-size:12px;
+}
+.updated{margin-top:7px;color:#8197a8;font-size:10px;text-align:right}
+.empty{
+  margin:20px 0;
+  padding:25px;
+  text-align:center;
+  border:1px dashed var(--line);
+  border-radius:18px;
+  color:var(--muted);
+  font-weight:900;
+}
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;color:#cbd9e3;font-size:12px;font-weight:800}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:5px}
+
+@media(max-width:900px){
+  .summary{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:600px){
+  .wrap{width:min(100% - 16px,1480px)}
+  .summary{grid-template-columns:1fr 1fr}
+  .grid{grid-template-columns:1fr;padding:9px}
+  .actions{grid-template-columns:1fr}
+  .hero{padding:15px}
+}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+  <section class="hero">
+    <div class="heroTop">
+      <div>
+        <h1>Koru Florya Açılış Takip</h1>
+        <div class="subtitle">Açılış günü mağaza hazırlık durumu — depolar hariç</div>
+        <div class="legend">
+          <span><i class="dot" style="background:var(--green)"></i>Açılacak</span>
+          <span><i class="dot" style="background:var(--blue)"></i>Raflara malzeme diziyor</span>
+          <span><i class="dot" style="background:var(--red)"></i>Gecikiyor</span>
+          <span><i class="dot" style="background:var(--yellow)"></i>Henüz değerlendirilmedi</span>
+        </div>
+      </div>
+      <div>
+        <input id="searchInput" class="search" placeholder="Mağaza veya lot ara...">
+        <div id="syncState" class="sync">Bağlanıyor...</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="summary">
+    <button class="kpi" onclick="setStatusFilter('ALL')"><b id="kTotal">0</b><span>Toplam Mağaza</span></button>
+    <button class="kpi ready" onclick="setStatusFilter('ready')"><b id="kReady">0</b><span>Açılacak</span></button>
+    <button class="kpi stock" onclick="setStatusFilter('stocking')"><b id="kStock">0</b><span>Raflara Diziyor</span></button>
+    <button class="kpi delay" onclick="setStatusFilter('delayed')"><b id="kDelay">0</b><span>Geciken</span></button>
+    <button class="kpi unknown" onclick="setStatusFilter('unknown')"><b id="kUnknown">0</b><span>Değerlendirilmedi</span></button>
+  </section>
+
+  <div id="floorTabs" class="floorTabs"></div>
+  <div id="content"></div>
+</div>
+
+<script>
+/* Açılış işaretleri bu projede ayrı koleksiyonda tutulur. */
+const firebaseConfig={
+  apiKey:"AIzaSyCfzjZTi-4nbiPmByAzEn5XRIqarWheT0k",
+  authDomain:"fire-f6f25.firebaseapp.com",
+  projectId:"fire-f6f25",
+  storageBucket:"fire-f6f25.firebasestorage.app",
+  messagingSenderId:"313570540415",
+  appId:"1:313570540415:web:3842e615c142da9fa0f84a"
+};
+
+/* İlk HTML'nin mağaza adı / kat / lot kaynağı. SADECE OKUMA. */
+const sourceFirebaseConfig={
+  apiKey:"AIzaSyDFflfD15ScmCWLD2pmt2fqMamnV6Fjup4",
+  authDomain:"raportakip-10cfc.firebaseapp.com",
+  projectId:"raportakip-10cfc",
+  storageBucket:"raportakip-10cfc.firebasestorage.app",
+  messagingSenderId:"250817491437",
+  appId:"1:250817491437:web:3ca15f873b0e80c3d737e4"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db=firebase.firestore();
+const sourceApp=firebase.initializeApp(sourceFirebaseConfig,"sourceStoresApp");
+const sourceDb=firebase.firestore(sourceApp);
+
+const TRACK_COL="opening_readiness_2026";
+const FLOORS=["ZEMİN","1BK","2BK","3BK","4BK"];
+
+let stores=[];
+let tracking={};
+let floorFilter="ALL";
+let statusFilter="ALL";
+
+const $=id=>document.getElementById(id);
+function clean(v){return String(v??"").replace(/\s+/g," ").trim()}
+function norm(v){
+  return clean(v).toUpperCase()
+    .replace(/İ/g,"I").replace(/Ğ/g,"G").replace(/Ü/g,"U")
+    .replace(/Ş/g,"S").replace(/Ö/g,"O").replace(/Ç/g,"C");
+}
+function esc(v){
+  return String(v??"").replace(/[&<>"']/g,m=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[m]));
+}
+function normalizeFloorName(v){
+  const k=norm(v);
+  if(["ZK","ZEMIN","ZEMIN KAT","ZEMIN KATI","0","0K","0BK"].includes(k))return "ZEMİN";
+  if(["B1","1BK","1 BK","1.KAT","1 KAT","BODRUM 1","-1"].includes(k))return "1BK";
+  if(["B2","2BK","2 BK","2.KAT","2 KAT","BODRUM 2","-2"].includes(k))return "2BK";
+  if(["B3","3BK","3 BK","3.KAT","3 KAT","BODRUM 3","-3"].includes(k))return "3BK";
+  if(["B4","4BK","4 BK","4.KAT","4 KAT","BODRUM 4","-4"].includes(k))return "4BK";
+  return clean(v);
+}
+function pickFirst(x,keys){
+  for(const k of keys){
+    if(x && x[k]!=null && clean(x[k])) return clean(x[k]);
+  }
+  return "";
+}
+function sourceStore(d,id){
+  const x=d||{};
+  const kat=normalizeFloorName(pickFirst(x,[
+    "kat","Kat","KAT","floor","Floor","FLOOR","sheet","Sheet","SHEET",
+    "katAdi","katAdı","katName","blok","seviye","level"
+  ]));
+  const lot=pickFirst(x,[
+    "lot","Lot","LOT","lotNo","LotNo","LOT NO","LOT_NO",
+    "lotNumarasi","lotNumarası","mağazaNo","magazaNo","depoNo","unitNo","unit","no"
+  ]);
+  const name=pickFirst(x,[
+    "name","Name","magaza","mağaza","magazaAdi","mağazaAdı","magazaAdı",
+    "mağazaAdi","storeName","store","tenant","kiraci","kiracı","MAĞAZA ADI","MAGAZA ADI"
+  ]);
+
+  if(!name && !lot) return null;
+
+  /* Depolar kesin olarak ekrana alınmaz. */
+  const typeText=norm([
+    name, lot,
+    x.type,x.tip,x.tur,x.tür,x.category,x.kategori,x.unitType,x.mahalTipi
+  ].filter(Boolean).join(" "));
+  if(/\bDEPO\b/.test(typeText) || /\bWAREHOUSE\b/.test(typeText)) return null;
+
+  return {id:String(id),kat,lot,name};
+}
+function floorOrder(v){
+  const i=FLOORS.indexOf(v);
+  return i<0?999:i;
+}
+function stateOf(s){
+  return tracking[s.id]||{status:"unknown",delay:"",note:"",updatedAt:""};
+}
+function statusText(st){
+  if(st.status==="ready")return "Açılacak";
+  if(st.status==="stocking")return "Raflara malzeme diziyor";
+  if(st.status==="delayed")return st.delay ? "Gecikiyor · "+st.delay : "Gecikiyor";
+  return "Henüz değerlendirilmedi";
+}
+function nowTR(){
+  return new Date().toLocaleString("tr-TR",{dateStyle:"short",timeStyle:"short"});
+}
+
+async function loadStores(){
+  $("syncState").textContent="Mağaza listesi okunuyor...";
+  try{
+    const snap=await sourceDb.collection("stores").get();
+    const arr=[];
+    snap.forEach(doc=>{
+      const s=sourceStore(doc.data(),doc.id);
+      if(s)arr.push(s);
+    });
+    stores=arr.sort((a,b)=>{
+      const f=floorOrder(a.kat)-floorOrder(b.kat);
+      if(f)return f;
+      const n=(a.name||"").localeCompare(b.name||"","tr",{numeric:true,sensitivity:"base"});
+      if(n)return n;
+      return (a.lot||"").localeCompare(b.lot||"","tr",{numeric:true});
+    });
+    $("syncState").textContent=stores.length+" mağaza yüklendi · depolar hariç";
+    render();
+  }catch(err){
+    console.error(err);
+    $("syncState").textContent="Mağaza listesi okunamadı. Firebase Rules kontrol edilmeli.";
+  }
+}
+
+function listenTracking(){
+  db.collection(TRACK_COL).onSnapshot(snap=>{
+    tracking={};
+    snap.forEach(doc=>tracking[doc.id]={id:doc.id,...doc.data()});
+    render();
+  },err=>{
+    console.error(err);
+    $("syncState").textContent="Açılış kayıtları okunamadı. Firebase Rules kontrol edilmeli.";
+  });
+}
+
+async function setStoreStatus(id,status){
+  const old=tracking[id]||{};
+  const payload={
+    status,
+    delay:status==="delayed" ? (old.delay||"1 hafta") : "",
+    note:old.note||"",
+    updatedAt:nowTR()
+  };
+  tracking[id]={...old,...payload};
+  render();
+  try{
+    await db.collection(TRACK_COL).doc(id).set(payload,{merge:true});
+  }catch(err){
+    console.error(err);
+    alert("Durum kaydedilemedi. Firebase Rules kontrol edilmeli.");
+  }
+}
+async function setDelay(id,value){
+  const old=tracking[id]||{};
+  const payload={status:"delayed",delay:value,note:old.note||"",updatedAt:nowTR()};
+  tracking[id]={...old,...payload};
+  render();
+  try{
+    await db.collection(TRACK_COL).doc(id).set(payload,{merge:true});
+  }catch(err){
+    console.error(err);
+    alert("Gecikme tahmini kaydedilemedi.");
+  }
+}
+let noteTimers={};
+function saveNoteLater(id,value){
+  tracking[id]={...(tracking[id]||{}),note:value};
+  clearTimeout(noteTimers[id]);
+  noteTimers[id]=setTimeout(async()=>{
+    const old=tracking[id]||{};
+    try{
+      await db.collection(TRACK_COL).doc(id).set({
+        status:old.status||"unknown",
+        delay:old.delay||"",
+        note:value,
+        updatedAt:nowTR()
+      },{merge:true});
+    }catch(err){console.error(err)}
+  },500);
+}
+function setFloorFilter(v){floorFilter=v;render()}
+function setStatusFilter(v){statusFilter=v;render()}
+
+function visibleStores(){
+  const q=norm($("searchInput").value||"");
+  return stores.filter(s=>{
+    if(floorFilter!=="ALL" && s.kat!==floorFilter)return false;
+    const st=stateOf(s);
+    if(statusFilter!=="ALL" && st.status!==statusFilter)return false;
+    if(q && !norm([s.name,s.lot,s.kat].join(" ")).includes(q))return false;
+    return true;
+  });
+}
+function renderTabs(){
+  const present=FLOORS.filter(f=>stores.some(s=>s.kat===f));
+  $("floorTabs").innerHTML=
+    `<button class="floorBtn ${floorFilter==="ALL"?"active":""}" onclick="setFloorFilter('ALL')">Tüm Katlar</button>`+
+    present.map(f=>`<button class="floorBtn ${floorFilter===f?"active":""}" onclick="setFloorFilter('${esc(f)}')">${esc(f)}</button>`).join("");
+}
+function renderKpis(){
+  $("kTotal").textContent=stores.length;
+  $("kReady").textContent=stores.filter(s=>stateOf(s).status==="ready").length;
+  $("kStock").textContent=stores.filter(s=>stateOf(s).status==="stocking").length;
+  $("kDelay").textContent=stores.filter(s=>stateOf(s).status==="delayed").length;
+  $("kUnknown").textContent=stores.filter(s=>stateOf(s).status==="unknown").length;
+}
+function cardHtml(s){
+  const st=stateOf(s);
+  const delayOptions=["1-2 gün","3-4 gün","1 hafta","2 hafta","3 hafta","1 ay","1 aydan fazla"];
+  return `
+    <article class="storeCard ${esc(st.status)}">
+      <div class="storeName">${esc(s.name||"İsimsiz Mağaza")}</div>
+      <div class="meta">${esc(s.kat||"-")} · Lot ${esc(s.lot||"-")}</div>
+
+      <div class="stateLine">
+        <span class="statePill ${esc(st.status)}">${esc(statusText(st))}</span>
+      </div>
+
+      <div class="actions">
+        <button class="btnReady ${st.status==="ready"?"":"inactive"}"
+          onclick="setStoreStatus('${esc(s.id)}','ready')">✓ Açılacak</button>
+        <button class="btnStock ${st.status==="stocking"?"":"inactive"}"
+          onclick="setStoreStatus('${esc(s.id)}','stocking')">▦ Raflara Diziyor</button>
+        <button class="btnDelay ${st.status==="delayed"?"":"inactive"}"
+          onclick="setStoreStatus('${esc(s.id)}','delayed')">! Gecikiyor</button>
+      </div>
+
+      ${st.status==="delayed" ? `
+        <div class="delayBox">
+          <select onchange="setDelay('${esc(s.id)}',this.value)">
+            ${delayOptions.map(x=>`<option ${st.delay===x?"selected":""}>${x}</option>`).join("")}
+          </select>
+        </div>` : ""}
+
+      <input class="noteInput"
+        value="${esc(st.note||"")}"
+        placeholder="Kısa not (opsiyonel)"
+        oninput="saveNoteLater('${esc(s.id)}',this.value)">
+
+      ${st.updatedAt?`<div class="updated">Son güncelleme: ${esc(st.updatedAt)}</div>`:""}
+    </article>`;
+}
+function render(){
+  renderTabs();
+  renderKpis();
+
+  const list=visibleStores();
+  const groups={};
+  for(const s of list){
+    const k=s.kat||"KAT BİLGİSİ YOK";
+    (groups[k]||(groups[k]=[])).push(s);
+  }
+
+  const keys=Object.keys(groups).sort((a,b)=>floorOrder(a)-floorOrder(b));
+  if(!keys.length){
+    $("content").innerHTML='<div class="empty">Bu filtreye uygun mağaza yok.</div>';
+    return;
+  }
+
+  $("content").innerHTML=keys.map(f=>{
+    const arr=groups[f];
+    const opened=arr.filter(s=>stateOf(s).status==="ready").length;
+    const stocking=arr.filter(s=>stateOf(s).status==="stocking").length;
+    const delayed=arr.filter(s=>stateOf(s).status==="delayed").length;
+    return `
+      <section class="floorSection">
+        <div class="floorHead">
+          <h2>${esc(f)}</h2>
+          <div class="floorMeta">
+            ${arr.length} mağaza · Açılacak ${opened} · Raflara diziyor ${stocking} · Geciken ${delayed}
+          </div>
+        </div>
+        <div class="grid">${arr.map(cardHtml).join("")}</div>
+      </section>`;
+  }).join("");
+}
+
+$("searchInput").addEventListener("input",render);
+
+loadStores();
+listenTracking();
+</script>
+</body>
+</html>
