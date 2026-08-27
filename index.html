@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Koru Florya Açılış Takip V2</title>
+<title>Koru Florya Açılış Takip V3</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
@@ -153,9 +153,10 @@ h1{margin:0;color:#8ff7ff;font-size:clamp(26px,3.2vw,40px)}
 }
 .adminManageList{display:grid;gap:8px;margin-top:14px;max-height:50vh;overflow:auto}
 .adminManageItem{
-  display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;border:1px solid var(--line);
+  display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;border:1px solid var(--line);
   border-radius:12px;padding:10px;background:rgba(255,255,255,.045)
 }
+.btnEdit{background:#22d3ee;color:#03212a}
 
 @media(max-width:1050px){.summary{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:700px){
@@ -246,6 +247,44 @@ h1{margin:0;color:#8ff7ff;font-size:clamp(26px,3.2vw,40px)}
   </div>
 </div>
 
+
+<div id="editStoreOverlay" class="modalOverlay">
+  <div class="modal">
+    <div class="modalHead">
+      <h2>Mağaza Bilgilerini Düzenle</h2>
+      <button class="btn btnGhost" onclick="closeEditStoreModal()">Kapat</button>
+    </div>
+
+    <input id="editStoreId" type="hidden">
+
+    <div class="formGrid">
+      <div class="field">
+        <label>Kat</label>
+        <select id="editFloor">
+          <option value="ZEMİN">ZEMİN</option>
+          <option value="1BK">1BK</option>
+          <option value="2BK">2BK</option>
+          <option value="3BK">3BK</option>
+          <option value="4BK">4BK</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Lot</label>
+        <input id="editLot" placeholder="Lot no">
+      </div>
+      <div class="field">
+        <label>Mağaza Adı</label>
+        <input id="editName" placeholder="Mağaza adı">
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+      <button class="btn btnOk" onclick="saveStoreEdit()">Değişiklikleri Kaydet</button>
+      <button class="btn btnDanger" onclick="deleteStoreFromEdit()">Mağazayı Sil</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const firebaseConfig={
   apiKey:"AIzaSyCfzjZTi-4nbiPmByAzEn5XRIqarWheT0k",
@@ -271,10 +310,11 @@ const sourceDb=firebase.firestore(sourceApp);
 
 const TRACK_COL="opening_readiness_2026";
 const CUSTOM_COL="opening_custom_stores_2026";
-const ADMIN_PIN="2999";
+const OVERRIDE_COL="opening_store_overrides_2026";
+const ADMIN_PIN="1234";
 const FLOORS=["ZEMİN","1BK","2BK","3BK","4BK"];
 
-let sourceStores=[],customStores=[],tracking={},adminMode=false,floorFilter="ALL",statusFilter="ALL";
+let sourceStores=[],customStores=[],storeOverrides={},tracking={},adminMode=false,floorFilter="ALL",statusFilter="ALL";
 const $=id=>document.getElementById(id);
 
 function clean(v){return String(v??"").replace(/\s+/g," ").trim()}
@@ -306,15 +346,32 @@ function sourceStore(d,id){
   return {id:"src_"+String(id),sourceId:String(id),kat,lot,name,origin:"source"}
 }
 function allStores(){
-  const map=new Map();
-  [...sourceStores,...customStores].forEach(s=>map.set(s.id,s));
-  return [...map.values()].sort((a,b)=>{
-    const f=FLOORS.indexOf(a.kat)-FLOORS.indexOf(b.kat);
+  const arr=[];
+
+  for(const src of sourceStores){
+    const ov=storeOverrides[src.id]||{};
+    if(ov.deleted===true)continue;
+    arr.push({
+      ...src,
+      kat:ov.kat!=null?normalizeFloorName(ov.kat):src.kat,
+      lot:ov.lot!=null?clean(ov.lot):src.lot,
+      name:ov.name!=null?clean(ov.name):src.name
+    });
+  }
+
+  for(const c of customStores){
+    if(c.deleted===true)continue;
+    arr.push(c);
+  }
+
+  return arr.sort((a,b)=>{
+    const fa=FLOORS.indexOf(a.kat), fb=FLOORS.indexOf(b.kat);
+    const f=(fa<0?999:fa)-(fb<0?999:fb);
     if(f)return f;
     const n=(a.name||"").localeCompare(b.name||"","tr",{numeric:true,sensitivity:"base"});
     if(n)return n;
-    return (a.lot||"").localeCompare(b.lot||"","tr",{numeric:true})
-  })
+    return (a.lot||"").localeCompare(b.lot||"","tr",{numeric:true});
+  });
 }
 function stateOf(s){return tracking[s.id]||{status:"unknown",delay:"",note:"",updatedAt:""}}
 function statusText(st){
@@ -350,6 +407,16 @@ function listenCustomStores(){
     render();renderAdminList()
   })
 }
+
+function listenStoreOverrides(){
+  db.collection(OVERRIDE_COL).onSnapshot(snap=>{
+    storeOverrides={};
+    snap.forEach(doc=>storeOverrides[doc.id]={id:doc.id,...doc.data()});
+    render();
+    renderAdminList();
+  })
+}
+
 function listenTracking(){
   db.collection(TRACK_COL).onSnapshot(snap=>{
     tracking={};
@@ -501,18 +568,12 @@ async function deleteStore(id){
     await db.collection(CUSTOM_COL).doc(id).delete();
     await db.collection(TRACK_COL).doc(id).delete().catch(()=>{});
   }else{
-    // Kaynak listeye dokunmamak için source mağazayı gizleme kaydı olarak işaretleriz.
-    await db.collection(TRACK_COL).doc(id).set({hiddenByAdmin:true,updatedAt:nowTR()},{merge:true});
-    tracking[id]={...(tracking[id]||{}),hiddenByAdmin:true,updatedAt:nowTR()};
-    render();renderAdminList();
+    await db.collection(OVERRIDE_COL).doc(id).set({
+      deleted:true,
+      updatedAt:nowTR()
+    },{merge:true});
   }
-}
-function effectiveAllStores(){
-  return allStores().filter(s=>!(tracking[s.id]&&tracking[s.id].hiddenByAdmin));
-}
-const _allStoresOriginal = allStores;
-allStores = function(){
-  return _allStoresOriginal().filter(s=>!(tracking[s.id]&&tracking[s.id].hiddenByAdmin))
+  closeEditStoreModal();
 }
 
 function renderAdminList(){
@@ -524,14 +585,60 @@ function renderAdminList(){
   el.innerHTML=arr.length?arr.map(s=>`
     <div class="adminManageItem">
       <div><b>${esc(s.name||"İsimsiz Mağaza")}</b><div class="meta">${esc(s.kat||"-")} · Lot ${esc(s.lot||"-")}</div></div>
+      <button class="btn btnEdit" onclick="openEditStoreModal('${esc(s.id)}')">Düzenle</button>
       <button class="btn btnDanger" onclick="deleteStore('${esc(s.id)}')">Sil</button>
     </div>`).join(""):'<div class="empty">Mağaza bulunamadı.</div>'
+}
+
+
+function openEditStoreModal(id){
+  if(!adminMode)return;
+  const s=allStores().find(x=>x.id===id);
+  if(!s)return;
+  $("editStoreId").value=s.id;
+  $("editFloor").value=FLOORS.includes(s.kat)?s.kat:"ZEMİN";
+  $("editLot").value=s.lot||"";
+  $("editName").value=s.name||"";
+  $("editStoreOverlay").classList.add("show");
+}
+function closeEditStoreModal(){
+  $("editStoreOverlay").classList.remove("show");
+  $("editStoreId").value="";
+}
+async function saveStoreEdit(){
+  if(!adminMode)return;
+  const id=$("editStoreId").value;
+  const s=allStores().find(x=>x.id===id);
+  if(!s)return;
+
+  const kat=$("editFloor").value;
+  const lot=clean($("editLot").value);
+  const name=clean($("editName").value);
+
+  if(!kat||!lot||!name)return alert("Kat, lot ve mağaza adı gerekli.");
+
+  if(s.origin==="custom"){
+    await db.collection(CUSTOM_COL).doc(id).set({
+      kat,lot,name,updatedAt:nowTR()
+    },{merge:true});
+  }else{
+    await db.collection(OVERRIDE_COL).doc(id).set({
+      kat,lot,name,deleted:false,updatedAt:nowTR()
+    },{merge:true});
+  }
+
+  closeEditStoreModal();
+}
+async function deleteStoreFromEdit(){
+  const id=$("editStoreId").value;
+  if(id)await deleteStore(id);
 }
 
 $("searchInput").addEventListener("input",render);
 
 loadSourceStores();
 listenCustomStores();
+listenStoreOverrides();
 listenTracking();
 </script>
 </body>
