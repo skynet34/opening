@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Koru Florya Açılış Takip V4</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<style>
+:root{
+  --bg:#07131f;--panel:#0d2030;--panel2:#112b3d;--line:rgba(255,255,255,.12);
+  --text:#eef7ff;--muted:#9eb4c5;--green:#4ade80;--blue:#60a5fa;--yellow:#facc15;
+  --orange:#fb923c;--red:#fb7185;--purple:#c084fc;--gray:#64748b;--cyan:#22d3ee;
+  --shadow:0 18px 45px rgba(0,0,0,.32)
+}
+*{box-sizing:border-box}
+body{
+  margin:0;min-height:100vh;font-family:Arial,Helvetica,sans-serif;
+  background:radial-gradient(circle at 15% 0%,rgba(34,211,238,.13),transparent 30%),
+             linear-gradient(145deg,#081723,#04101a 68%,#02070b);
+  color:var(--text)
+}
+.wrap{width:min(1500px,calc(100% - 28px));margin:auto;padding:22px 0 46px}
+.hero{
+  border:1px solid rgba(34,211,238,.24);border-radius:24px;padding:20px;
+  background:linear-gradient(135deg,rgba(17,43,61,.96),rgba(5,19,31,.96));box-shadow:var(--shadow)
+}
+.heroTop{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap}
+h1{margin:0;color:#8ff7ff;font-size:clamp(26px,3.2vw,40px)}
+.subtitle{color:#c9d7e2;margin-top:7px;font-weight:700;line-height:1.45}
+.sync{font-size:12px;color:var(--muted);margin-top:8px}
+.topTools{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.search{
+  min-width:min(330px,100%);border:1px solid var(--line);background:#081927;color:#fff;
+  border-radius:13px;padding:12px 14px;font-size:14px;outline:none
+}
+.btn{
+  border:0;border-radius:12px;padding:11px 13px;font-weight:900;cursor:pointer
+}
+.btnAdmin{background:#ffe066;color:#251d00}
+.btnGhost{background:transparent;color:#fff;border:1px solid var(--line)}
+.btnDanger{background:#e11d48;color:#fff}
+.btnOk{background:var(--green);color:#062413}
+.btnBlue{background:var(--blue);color:#071d35}
+.hidden{display:none!important}
+
+.controls{
+  display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;
+  margin:14px 0 8px
+}
+.toggleLine{display:flex;align-items:center;gap:8px;color:#dce8f0;font-weight:900;font-size:13px}
+.toggleLine input{width:18px;height:18px}
+
+.summary{
+  display:grid;grid-template-columns:repeat(6,minmax(135px,1fr));gap:10px;margin:10px 0 14px
+}
+.kpi{
+  border:1px solid var(--line);border-radius:17px;padding:13px 14px;background:rgba(255,255,255,.055);
+  box-shadow:0 10px 24px rgba(0,0,0,.20);cursor:pointer;transition:.15s;color:#fff;text-align:left
+}
+.kpi:hover{transform:translateY(-2px);filter:brightness(1.08)}
+.kpi b{display:block;font-size:28px}
+.kpi span{font-size:11px;font-weight:900;text-transform:uppercase;color:#dce8f0}
+.kpi.open{border-color:rgba(74,222,128,.45);background:rgba(74,222,128,.11)}
+.kpi.stock{border-color:rgba(96,165,250,.45);background:rgba(96,165,250,.11)}
+.kpi.delay{border-color:rgba(251,113,133,.48);background:rgba(251,113,133,.10)}
+.kpi.notstarted{border-color:rgba(250,204,21,.45);background:rgba(250,204,21,.09)}
+.kpi.notreceived{border-color:rgba(192,132,252,.45);background:rgba(192,132,252,.10)}
+
+.floorTabs{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 16px}
+.floorBtn{
+  border:1px solid var(--line);background:#0d2030;color:#dce8f0;border-radius:999px;
+  padding:9px 13px;font-weight:900;cursor:pointer
+}
+.floorBtn.active{background:var(--cyan);color:#03212a;border-color:var(--cyan)}
+
+.floorSection{
+  margin:18px 0 24px;border:1px solid rgba(255,255,255,.11);background:rgba(9,27,41,.76);
+  border-radius:22px;overflow:hidden;box-shadow:var(--shadow)
+}
+.floorHead{
+  display:flex;justify-content:space-between;gap:12px;align-items:center;padding:14px 16px;
+  border-bottom:1px solid var(--line);background:linear-gradient(90deg,rgba(34,211,238,.13),rgba(255,255,255,.02))
+}
+.floorHead h2{margin:0;color:#8ff7ff;font-size:22px}
+.floorMeta{color:var(--muted);font-size:12px;font-weight:800}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(285px,1fr));gap:11px;padding:13px}
+.storeCard{
+  position:relative;border:1px solid var(--line);border-left:8px solid var(--gray);border-radius:17px;
+  padding:13px;background:linear-gradient(145deg,rgba(255,255,255,.06),rgba(0,0,0,.11));min-height:210px
+}
+.storeCard.opening{border-left-color:var(--green)}
+.storeCard.stocking{border-left-color:var(--blue)}
+.storeCard.delayed{border-left-color:var(--red)}
+.storeCard.notstarted{border-left-color:var(--yellow)}
+.storeCard.notreceived{border-left-color:var(--purple)}
+.storeCard.unknown{border-left-color:var(--gray)}
+.storeTop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.storeName{font-size:18px;font-weight:950;line-height:1.12}
+.meta{color:var(--muted);font-size:12px;font-weight:850;margin-top:5px}
+.cardAdminBtns{display:flex;gap:5px}
+.editMini,.deleteMini{
+  border:0;background:transparent;font-size:16px;cursor:pointer;padding:2px 5px;line-height:1;border-radius:7px
+}
+.editMini{color:#8ff7ff}
+.editMini:hover{background:rgba(34,211,238,.12)}
+.deleteMini{color:#ff9aaa}
+.deleteMini:hover{background:rgba(251,113,133,.12)}
+.stateLine{margin:10px 0 9px}
+.statePill{display:inline-flex;border-radius:999px;padding:6px 9px;font-size:11px;font-weight:950;border:1px solid var(--line)}
+.statePill.opening{background:rgba(74,222,128,.14);color:#bff8d1;border-color:rgba(74,222,128,.35)}
+.statePill.stocking{background:rgba(96,165,250,.15);color:#cae2ff;border-color:rgba(96,165,250,.38)}
+.statePill.delayed{background:rgba(251,113,133,.14);color:#ffd1da;border-color:rgba(251,113,133,.38)}
+.statePill.notstarted{background:rgba(250,204,21,.11);color:#fff0a6;border-color:rgba(250,204,21,.30)}
+.statePill.notreceived{background:rgba(192,132,252,.13);color:#edd6ff;border-color:rgba(192,132,252,.34)}
+.statePill.unknown{background:rgba(100,116,139,.16);color:#d9e2ea;border-color:rgba(100,116,139,.30)}
+
+.actions{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:8px}
+.actions button{border:0;border-radius:10px;padding:9px 6px;cursor:pointer;font-size:11px;font-weight:950}
+.btnOpening{background:var(--green);color:#062413}
+.btnStock{background:var(--blue);color:#071d35}
+.btnDelay{background:var(--red);color:#350711}
+.btnNotStarted{background:var(--yellow);color:#2c2500}
+.btnNotReceived{background:var(--purple);color:#20032f}
+.actions button.inactive{opacity:.36;filter:saturate(.55)}
+.delayBox{margin-top:8px}
+.delayBox select{
+  width:100%;border:1px solid rgba(251,113,133,.32);background:#091925;color:#fff;
+  border-radius:10px;padding:9px 10px;font-weight:800
+}
+.noteInput{
+  width:100%;margin-top:7px;border:1px solid var(--line);background:#081927;color:#fff;
+  border-radius:10px;padding:8px 9px;font-size:12px
+}
+.updated{margin-top:7px;color:#8197a8;font-size:10px;text-align:right}
+.empty{
+  margin:20px 0;padding:25px;text-align:center;border:1px dashed var(--line);
+  border-radius:18px;color:var(--muted);font-weight:900
+}
+
+.modalOverlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;
+  z-index:1000;padding:18px
+}
+.modalOverlay.show{display:flex}
+.modal{
+  width:min(760px,96vw);max-height:90vh;overflow:auto;background:#0d2030;border:1px solid var(--line);
+  border-radius:20px;box-shadow:0 24px 70px rgba(0,0,0,.55);padding:16px
+}
+.modalHead{display:flex;justify-content:space-between;gap:12px;align-items:center;border-bottom:1px solid var(--line);padding-bottom:11px;margin-bottom:14px}
+.modalHead h2{margin:0;color:#8ff7ff}
+.formGrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.field label{display:block;color:var(--muted);font-size:12px;font-weight:900;margin-bottom:6px}
+.field input,.field select{
+  width:100%;border:1px solid var(--line);background:#081927;color:#fff;border-radius:11px;padding:10px
+}
+.adminManageList{display:grid;gap:8px;margin-top:14px;max-height:50vh;overflow:auto}
+.adminManageItem{
+  display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;border:1px solid var(--line);
+  border-radius:12px;padding:10px;background:rgba(255,255,255,.045)
+}
+.btnEdit{background:#22d3ee;color:#03212a}
+
+@media(max-width:1050px){.summary{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:700px){
+  .summary{grid-template-columns:repeat(2,1fr)}
+  .grid{grid-template-columns:1fr;padding:9px}
+  .actions{grid-template-columns:1fr}
+  .formGrid{grid-template-columns:1fr}
+}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+  <section class="hero">
+    <div class="heroTop">
+      <div>
+        <h1>Koru Florya Açılış Takip</h1>
+        <div class="subtitle">Mağazaların açılışa hazırlık durumu · depolar hariç</div>
+      </div>
+      <div>
+        <div class="topTools">
+          <input id="searchInput" class="search" placeholder="Mağaza veya lot ara...">
+          <button id="adminBtn" class="btn btnAdmin" onclick="loginAdmin()">Admin</button>
+          <button id="manageBtn" class="btn btnBlue hidden" onclick="openAdminModal()">Mağaza Yönetimi</button>
+          <button id="excelBtn" class="btn btnOk hidden" onclick="exportExcel()">Excel Çıktısı</button>
+          <button id="logoutBtn" class="btn btnGhost hidden" onclick="logoutAdmin()">Çıkış</button>
+        </div>
+        <div id="syncState" class="sync">Bağlanıyor...</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="controls">
+    <label class="toggleLine">
+      <input id="showUnnamed" type="checkbox" onchange="render()">
+      İsimsiz mağazaları göster
+    </label>
+  </div>
+
+  <section class="summary">
+    <button class="kpi" onclick="setStatusFilter('ALL')"><b id="kTotal">0</b><span>Toplam</span></button>
+    <button class="kpi open" onclick="setStatusFilter('opening')"><b id="kOpening">0</b><span>Açılıyor</span></button>
+    <button class="kpi stock" onclick="setStatusFilter('stocking')"><b id="kStock">0</b><span>Açılıyor / Raflara Diziyor</span></button>
+    <button class="kpi delay" onclick="setStatusFilter('delayed')"><b id="kDelay">0</b><span>Gecikiyor</span></button>
+    <button class="kpi notstarted" onclick="setStatusFilter('notstarted')"><b id="kNotStarted">0</b><span>İmalat Başlamadı</span></button>
+    <button class="kpi notreceived" onclick="setStatusFilter('notreceived')"><b id="kNotReceived">0</b><span>Teslim Almadı</span></button>
+  </section>
+
+  <div id="floorTabs" class="floorTabs"></div>
+  <div id="content"></div>
+</div>
+
+<div id="adminOverlay" class="modalOverlay">
+  <div class="modal">
+    <div class="modalHead">
+      <h2>Mağaza Yönetimi</h2>
+      <button class="btn btnGhost" onclick="closeAdminModal()">Kapat</button>
+    </div>
+
+    <div class="formGrid">
+      <div class="field">
+        <label>Kat</label>
+        <select id="newFloor">
+          <option value="ZEMİN">ZEMİN</option>
+          <option value="1BK">1BK</option>
+          <option value="2BK">2BK</option>
+          <option value="3BK">3BK</option>
+          <option value="4BK">4BK</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Lot</label>
+        <input id="newLot" placeholder="Lot no">
+      </div>
+      <div class="field">
+        <label>Mağaza Adı</label>
+        <input id="newName" placeholder="Mağaza adı">
+      </div>
+    </div>
+    <div style="margin-top:10px">
+      <button class="btn btnOk" onclick="addStore()">Mağaza Ekle</button>
+    </div>
+
+    <div class="field" style="margin-top:15px">
+      <label>Mağaza Ara</label>
+      <input id="manageSearch" placeholder="Mağaza / lot ara..." oninput="renderAdminList()">
+    </div>
+    <div id="adminManageList" class="adminManageList"></div>
+  </div>
+</div>
+
+
+<div id="editStoreOverlay" class="modalOverlay">
+  <div class="modal">
+    <div class="modalHead">
+      <h2>Mağaza Bilgilerini Düzenle</h2>
+      <button class="btn btnGhost" onclick="closeEditStoreModal()">Kapat</button>
+    </div>
+
+    <input id="editStoreId" type="hidden">
+
+    <div class="formGrid">
+      <div class="field">
+        <label>Kat</label>
+        <select id="editFloor">
+          <option value="ZEMİN">ZEMİN</option>
+          <option value="1BK">1BK</option>
+          <option value="2BK">2BK</option>
+          <option value="3BK">3BK</option>
+          <option value="4BK">4BK</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Lot</label>
+        <input id="editLot" placeholder="Lot no">
+      </div>
+      <div class="field">
+        <label>Mağaza Adı</label>
+        <input id="editName" placeholder="Mağaza adı">
+      </div>
+    </div>
+
+    <div class="formGrid" style="margin-top:10px">
+      <div class="field">
+        <label>Durum</label>
+        <select id="editStatus" onchange="toggleEditDelay()">
+          <option value="unknown">Henüz değerlendirilmedi</option>
+          <option value="opening">Açılıyor</option>
+          <option value="stocking">Raflara diziliyor</option>
+          <option value="delayed">Gecikiyor</option>
+          <option value="notstarted">İmalat başlamadı</option>
+          <option value="notreceived">Teslim almadı</option>
+        </select>
+      </div>
+      <div class="field" id="editDelayField">
+        <label>Gecikme Tahmini</label>
+        <select id="editDelay">
+          <option>1-2 gün</option>
+          <option>3-4 gün</option>
+          <option>1 hafta</option>
+          <option>2 hafta</option>
+          <option>3 hafta</option>
+          <option>1 ay</option>
+          <option>1 aydan fazla</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Kısa Not</label>
+        <input id="editNote" placeholder="Not">
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+      <button class="btn btnOk" onclick="saveStoreEdit()">Değişiklikleri Kaydet</button>
+      <button class="btn btnDanger" onclick="deleteStoreFromEdit()">Mağazayı Sil</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const firebaseConfig={
+  apiKey:"AIzaSyCfzjZTi-4nbiPmByAzEn5XRIqarWheT0k",
+  authDomain:"fire-f6f25.firebaseapp.com",
+  projectId:"fire-f6f25",
+  storageBucket:"fire-f6f25.firebasestorage.app",
+  messagingSenderId:"313570540415",
+  appId:"1:313570540415:web:3842e615c142da9fa0f84a"
+};
+const sourceFirebaseConfig={
+  apiKey:"AIzaSyDFflfD15ScmCWLD2pmt2fqMamnV6Fjup4",
+  authDomain:"raportakip-10cfc.firebaseapp.com",
+  projectId:"raportakip-10cfc",
+  storageBucket:"raportakip-10cfc.firebasestorage.app",
+  messagingSenderId:"250817491437",
+  appId:"1:250817491437:web:3ca15f873b0e80c3d737e4"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db=firebase.firestore();
+const sourceApp=firebase.initializeApp(sourceFirebaseConfig,"sourceStoresApp");
+const sourceDb=firebase.firestore(sourceApp);
+
+const TRACK_COL="opening_readiness_2026";
+const CUSTOM_COL="opening_custom_stores_2026";
+const OVERRIDE_COL="opening_store_overrides_2026";
+const ADMIN_PIN="1234";
+const FLOORS=["ZEMİN","1BK","2BK","3BK","4BK"];
+
+let sourceStores=[],customStores=[],storeOverrides={},tracking={},adminMode=false,floorFilter="ALL",statusFilter="ALL";
+const $=id=>document.getElementById(id);
+
+function clean(v){return String(v??"").replace(/\s+/g," ").trim()}
+function norm(v){return clean(v).toUpperCase().replace(/İ/g,"I").replace(/Ğ/g,"G").replace(/Ü/g,"U").replace(/Ş/g,"S").replace(/Ö/g,"O").replace(/Ç/g,"C")}
+function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+function idSafe(v){return norm(v).replace(/[^A-Z0-9]+/g,"_").replace(/^_|_$/g,"")}
+function normalizeFloorName(v){
+  const k=norm(v);
+  if(["ZK","ZEMIN","ZEMIN KAT","ZEMIN KATI","0","0K","0BK"].includes(k))return "ZEMİN";
+  if(["B1","1BK","1 BK","1.KAT","1 KAT","BODRUM 1","-1"].includes(k))return "1BK";
+  if(["B2","2BK","2 BK","2.KAT","2 KAT","BODRUM 2","-2"].includes(k))return "2BK";
+  if(["B3","3BK","3 BK","3.KAT","3 KAT","BODRUM 3","-3"].includes(k))return "3BK";
+  if(["B4","4BK","4 BK","4.KAT","4 KAT","BODRUM 4","-4"].includes(k))return "4BK";
+  return clean(v)
+}
+function pickFirst(x,keys){for(const k of keys){if(x&&x[k]!=null&&clean(x[k]))return clean(x[k])}return ""}
+function isUnnamed(s){return !clean(s.name)||norm(s.name)==="ISIMSIZ MAGAZA"||norm(s.name)==="ISIMSIZ"}
+function isDepotRaw(x,name,lot){
+  const typeText=norm([name,lot,x.type,x.tip,x.tur,x.tür,x.category,x.kategori,x.unitType,x.mahalTipi].filter(Boolean).join(" "));
+  return /\bDEPO\b/.test(typeText)||/\bWAREHOUSE\b/.test(typeText)
+}
+function sourceStore(d,id){
+  const x=d||{};
+  const kat=normalizeFloorName(pickFirst(x,["kat","Kat","KAT","floor","Floor","FLOOR","sheet","Sheet","SHEET","katAdi","katAdı","katName","blok","seviye","level"]));
+  const lot=pickFirst(x,["lot","Lot","LOT","lotNo","LotNo","LOT NO","LOT_NO","lotNumarasi","lotNumarası","mağazaNo","magazaNo","depoNo","unitNo","unit","no"]);
+  const name=pickFirst(x,["name","Name","magaza","mağaza","magazaAdi","mağazaAdı","magazaAdı","mağazaAdi","storeName","store","tenant","kiraci","kiracı","MAĞAZA ADI","MAGAZA ADI"]);
+  if(!name&&!lot)return null;
+  if(isDepotRaw(x,name,lot))return null;
+  return {id:"src_"+String(id),sourceId:String(id),kat,lot,name,origin:"source"}
+}
+function allStores(){
+  const arr=[];
+
+  for(const src of sourceStores){
+    const ov=storeOverrides[src.id]||{};
+    if(ov.deleted===true)continue;
+    arr.push({
+      ...src,
+      kat:ov.kat!=null?normalizeFloorName(ov.kat):src.kat,
+      lot:ov.lot!=null?clean(ov.lot):src.lot,
+      name:ov.name!=null?clean(ov.name):src.name
+    });
+  }
+
+  for(const c of customStores){
+    if(c.deleted===true)continue;
+    arr.push(c);
+  }
+
+  return arr.sort((a,b)=>{
+    const fa=FLOORS.indexOf(a.kat), fb=FLOORS.indexOf(b.kat);
+    const f=(fa<0?999:fa)-(fb<0?999:fb);
+    if(f)return f;
+    const n=(a.name||"").localeCompare(b.name||"","tr",{numeric:true,sensitivity:"base"});
+    if(n)return n;
+    return (a.lot||"").localeCompare(b.lot||"","tr",{numeric:true});
+  });
+}
+function stateOf(s){return tracking[s.id]||{status:"unknown",delay:"",note:"",updatedAt:""}}
+function statusText(st){
+  if(st.status==="opening")return "Açılıyor";
+  if(st.status==="stocking")return "Raflara malzeme diziyor";
+  if(st.status==="delayed")return st.delay?"Gecikiyor · "+st.delay:"Gecikiyor";
+  if(st.status==="notstarted")return "İmalat başlamadı";
+  if(st.status==="notreceived")return "Teslim almadı";
+  return "Henüz değerlendirilmedi"
+}
+function nowTR(){return new Date().toLocaleString("tr-TR",{dateStyle:"short",timeStyle:"short"})}
+
+async function loadSourceStores(){
+  try{
+    const snap=await sourceDb.collection("stores").get();
+    const arr=[];
+    snap.forEach(doc=>{const s=sourceStore(doc.data(),doc.id);if(s)arr.push(s)});
+    sourceStores=arr;
+    $("syncState").textContent=allStores().length+" mağaza yüklendi · depolar hariç";
+    render()
+  }catch(e){
+    console.error(e);
+    $("syncState").textContent="Kaynak mağaza listesi okunamadı."
+  }
+}
+function listenCustomStores(){
+  db.collection(CUSTOM_COL).onSnapshot(snap=>{
+    customStores=[];
+    snap.forEach(doc=>{
+      const d=doc.data()||{};
+      customStores.push({id:doc.id,kat:normalizeFloorName(d.kat||""),lot:clean(d.lot||""),name:clean(d.name||""),origin:"custom"})
+    });
+    render();renderAdminList()
+  })
+}
+
+function listenStoreOverrides(){
+  db.collection(OVERRIDE_COL).onSnapshot(snap=>{
+    storeOverrides={};
+    snap.forEach(doc=>storeOverrides[doc.id]={id:doc.id,...doc.data()});
+    render();
+    renderAdminList();
+  })
+}
+
+function listenTracking(){
+  db.collection(TRACK_COL).onSnapshot(snap=>{
+    tracking={};
+    snap.forEach(doc=>tracking[doc.id]={id:doc.id,...doc.data()});
+    render()
+  })
+}
+
+async function setStoreStatus(id,status){
+  const old=tracking[id]||{};
+  const payload={status,delay:status==="delayed"?(old.delay||"1 hafta"):"",note:old.note||"",updatedAt:nowTR()};
+  tracking[id]={...old,...payload};render();
+  try{await db.collection(TRACK_COL).doc(id).set(payload,{merge:true})}
+  catch(e){console.error(e);alert("Durum kaydedilemedi.")}
+}
+async function setDelay(id,value){
+  const old=tracking[id]||{};
+  const payload={status:"delayed",delay:value,note:old.note||"",updatedAt:nowTR()};
+  tracking[id]={...old,...payload};render();
+  try{await db.collection(TRACK_COL).doc(id).set(payload,{merge:true})}
+  catch(e){console.error(e)}
+}
+let noteTimers={};
+function saveNoteLater(id,value){
+  tracking[id]={...(tracking[id]||{}),note:value};
+  clearTimeout(noteTimers[id]);
+  noteTimers[id]=setTimeout(async()=>{
+    const old=tracking[id]||{};
+    await db.collection(TRACK_COL).doc(id).set({
+      status:old.status||"unknown",delay:old.delay||"",note:value,updatedAt:nowTR()
+    },{merge:true})
+  },500)
+}
+
+function setFloorFilter(v){floorFilter=v;render()}
+function setStatusFilter(v){statusFilter=v;render()}
+function visibleStores(){
+  const q=norm($("searchInput").value||"");
+  const showUnnamed=$("showUnnamed").checked;
+  return allStores().filter(s=>{
+    if(!showUnnamed&&isUnnamed(s))return false;
+    if(floorFilter!=="ALL"&&s.kat!==floorFilter)return false;
+    if(statusFilter!=="ALL"&&stateOf(s).status!==statusFilter)return false;
+    if(q&&!norm([s.name,s.lot,s.kat].join(" ")).includes(q))return false;
+    return true
+  })
+}
+function renderTabs(){
+  const present=FLOORS.filter(f=>allStores().some(s=>s.kat===f));
+  $("floorTabs").innerHTML=
+    `<button class="floorBtn ${floorFilter==="ALL"?"active":""}" onclick="setFloorFilter('ALL')">Tüm Katlar</button>`+
+    present.map(f=>`<button class="floorBtn ${floorFilter===f?"active":""}" onclick="setFloorFilter('${esc(f)}')">${esc(f)}</button>`).join("")
+}
+function renderKpis(){
+  const arr=allStores().filter(s=>$("showUnnamed").checked||!isUnnamed(s));
+  $("kTotal").textContent=arr.length;
+  $("kOpening").textContent=arr.filter(s=>["opening","stocking"].includes(stateOf(s).status)).length;
+  $("kStock").textContent=arr.filter(s=>stateOf(s).status==="stocking").length;
+  $("kDelay").textContent=arr.filter(s=>stateOf(s).status==="delayed").length;
+  $("kNotStarted").textContent=arr.filter(s=>stateOf(s).status==="notstarted").length;
+  $("kNotReceived").textContent=arr.filter(s=>stateOf(s).status==="notreceived").length
+}
+function cardHtml(s){
+  const st=stateOf(s);
+  const delayOptions=["1-2 gün","3-4 gün","1 hafta","2 hafta","3 hafta","1 ay","1 aydan fazla"];
+  return `
+  <article class="storeCard ${esc(st.status)}">
+    <div class="storeTop">
+      <div>
+        <div class="storeName">${esc(s.name||"İsimsiz Mağaza")}</div>
+        <div class="meta">${esc(s.kat||"-")} · Lot ${esc(s.lot||"-")}</div>
+      </div>
+      ${adminMode?`<div class="cardAdminBtns">
+        <button class="editMini" title="Düzenle" onclick="openEditStoreModal('${esc(s.id)}')">✎</button>
+        <button class="deleteMini" title="Sil" onclick="deleteStore('${esc(s.id)}')">✕</button>
+      </div>`:""}
+    </div>
+    <div class="stateLine"><span class="statePill ${esc(st.status)}">${esc(statusText(st))}</span></div>
+    <div class="actions">
+      <button class="btnOpening ${st.status==="opening"?"":"inactive"}" onclick="setStoreStatus('${esc(s.id)}','opening')">✓ Açılıyor</button>
+      <button class="btnStock ${st.status==="stocking"?"":"inactive"}" onclick="setStoreStatus('${esc(s.id)}','stocking')">▦ Raflara Diziyor</button>
+      <button class="btnDelay ${st.status==="delayed"?"":"inactive"}" onclick="setStoreStatus('${esc(s.id)}','delayed')">! Gecikiyor</button>
+      <button class="btnNotStarted ${st.status==="notstarted"?"":"inactive"}" onclick="setStoreStatus('${esc(s.id)}','notstarted')">İmalat Başlamadı</button>
+      <button class="btnNotReceived ${st.status==="notreceived"?"":"inactive"}" onclick="setStoreStatus('${esc(s.id)}','notreceived')">Teslim Almadı</button>
+    </div>
+    ${st.status==="delayed"?`
+      <div class="delayBox"><select onchange="setDelay('${esc(s.id)}',this.value)">
+      ${delayOptions.map(x=>`<option ${st.delay===x?"selected":""}>${x}</option>`).join("")}
+      </select></div>`:""}
+    <input class="noteInput" value="${esc(st.note||"")}" placeholder="Kısa not (opsiyonel)" oninput="saveNoteLater('${esc(s.id)}',this.value)">
+    ${st.updatedAt?`<div class="updated">Son güncelleme: ${esc(st.updatedAt)}</div>`:""}
+  </article>`
+}
+function render(){
+  renderTabs();renderKpis();
+  const list=visibleStores();
+  const groups={};
+  list.forEach(s=>{const k=s.kat||"KAT BİLGİSİ YOK";(groups[k]||(groups[k]=[])).push(s)});
+  const keys=Object.keys(groups).sort((a,b)=>FLOORS.indexOf(a)-FLOORS.indexOf(b));
+  if(!keys.length){$("content").innerHTML='<div class="empty">Bu filtreye uygun mağaza yok.</div>';return}
+  $("content").innerHTML=keys.map(f=>{
+    const arr=groups[f];
+    return `<section class="floorSection">
+      <div class="floorHead">
+        <h2>${esc(f)}</h2>
+        <div class="floorMeta">${arr.length} mağaza</div>
+      </div>
+      <div class="grid">${arr.map(cardHtml).join("")}</div>
+    </section>`
+  }).join("")
+}
+
+function loginAdmin(){
+  const p=prompt("Admin PIN");
+  if(p===null)return;
+  if(p!==ADMIN_PIN)return alert("PIN hatalı.");
+  adminMode=true;
+  $("adminBtn").classList.add("hidden");
+  $("manageBtn").classList.remove("hidden");
+  $("excelBtn").classList.remove("hidden");
+  $("logoutBtn").classList.remove("hidden");
+  render()
+}
+function logoutAdmin(){
+  adminMode=false;
+  $("adminBtn").classList.remove("hidden");
+  $("manageBtn").classList.add("hidden");
+  $("excelBtn").classList.add("hidden");
+  $("logoutBtn").classList.add("hidden");
+  closeAdminModal();render()
+}
+function openAdminModal(){
+  if(!adminMode)return;
+  $("adminOverlay").classList.add("show");
+  renderAdminList()
+}
+function closeAdminModal(){$("adminOverlay").classList.remove("show")}
+
+async function addStore(){
+  if(!adminMode)return;
+  const kat=$("newFloor").value, lot=clean($("newLot").value), name=clean($("newName").value);
+  if(!kat||!lot||!name)return alert("Kat, lot ve mağaza adı gerekli.");
+  const id="custom_"+idSafe(kat+"_"+lot+"_"+name)+"_"+Date.now();
+  await db.collection(CUSTOM_COL).doc(id).set({kat,lot,name,createdAt:nowTR()});
+  $("newLot").value="";$("newName").value="";
+}
+async function deleteStore(id){
+  if(!adminMode)return;
+  const s=allStores().find(x=>x.id===id);
+  if(!s)return;
+  if(!confirm((s.name||"İsimsiz Mağaza")+" silinsin mi?"))return;
+
+  if(s.origin==="custom"){
+    await db.collection(CUSTOM_COL).doc(id).delete();
+    await db.collection(TRACK_COL).doc(id).delete().catch(()=>{});
+  }else{
+    await db.collection(OVERRIDE_COL).doc(id).set({
+      deleted:true,
+      updatedAt:nowTR()
+    },{merge:true});
+  }
+  closeEditStoreModal();
+}
+
+function renderAdminList(){
+  const el=$("adminManageList");
+  if(!el)return;
+  const q=norm($("manageSearch").value||"");
+  let arr=allStores();
+  if(q)arr=arr.filter(s=>norm([s.name,s.lot,s.kat].join(" ")).includes(q));
+  el.innerHTML=arr.length?arr.map(s=>`
+    <div class="adminManageItem">
+      <div><b>${esc(s.name||"İsimsiz Mağaza")}</b><div class="meta">${esc(s.kat||"-")} · Lot ${esc(s.lot||"-")}</div></div>
+      <button class="btn btnEdit" onclick="openEditStoreModal('${esc(s.id)}')">Düzenle</button>
+      <button class="btn btnDanger" onclick="deleteStore('${esc(s.id)}')">Sil</button>
+    </div>`).join(""):'<div class="empty">Mağaza bulunamadı.</div>'
+}
+
+
+function openEditStoreModal(id){
+  if(!adminMode)return;
+  const s=allStores().find(x=>x.id===id);
+  if(!s)return;
+  $("editStoreId").value=s.id;
+  $("editFloor").value=FLOORS.includes(s.kat)?s.kat:"ZEMİN";
+  $("editLot").value=s.lot||"";
+  $("editName").value=s.name||"";
+  const st=stateOf(s);
+  $("editStatus").value=st.status||"unknown";
+  $("editDelay").value=st.delay||"1 hafta";
+  $("editNote").value=st.note||"";
+  toggleEditDelay();
+  $("editStoreOverlay").classList.add("show");
+}
+function closeEditStoreModal(){
+  $("editStoreOverlay").classList.remove("show");
+  $("editStoreId").value="";
+}
+function toggleEditDelay(){
+  const show=$("editStatus").value==="delayed";
+  $("editDelayField").style.display=show?"block":"none";
+}
+async function saveStoreEdit(){
+  if(!adminMode)return;
+  const id=$("editStoreId").value;
+  const s=allStores().find(x=>x.id===id);
+  if(!s)return;
+
+  const kat=$("editFloor").value;
+  const lot=clean($("editLot").value);
+  const name=clean($("editName").value);
+
+  if(!kat||!lot||!name)return alert("Kat, lot ve mağaza adı gerekli.");
+
+  if(s.origin==="custom"){
+    await db.collection(CUSTOM_COL).doc(id).set({
+      kat,lot,name,updatedAt:nowTR()
+    },{merge:true});
+  }else{
+    await db.collection(OVERRIDE_COL).doc(id).set({
+      kat,lot,name,deleted:false,updatedAt:nowTR()
+    },{merge:true});
+  }
+
+  const status=$("editStatus").value||"unknown";
+  const delay=status==="delayed"?$("editDelay").value:"";
+  const note=clean($("editNote").value);
+
+  await db.collection(TRACK_COL).doc(id).set({
+    status,delay,note,updatedAt:nowTR()
+  },{merge:true});
+
+  tracking[id]={...(tracking[id]||{}),status,delay,note,updatedAt:nowTR()};
+  closeEditStoreModal();
+  render();
+}
+async function deleteStoreFromEdit(){
+  const id=$("editStoreId").value;
+  if(id)await deleteStore(id);
+}
+
+
+function exportExcel(){
+  if(!adminMode)return;
+  if(typeof XLSX==="undefined"){
+    alert("Excel kütüphanesi yüklenemedi. İnternet bağlantısını kontrol edin.");
+    return;
+  }
+
+  const stores=allStores();
+  const rows=stores.map(s=>{
+    const st=stateOf(s);
+    return {
+      "Kat":s.kat||"",
+      "Lot":s.lot||"",
+      "Mağaza Adı":s.name||"İsimsiz Mağaza",
+      "Durum":statusText(st),
+      "Gecikme Tahmini":st.status==="delayed"?(st.delay||""):"",
+      "Kısa Not":st.note||"",
+      "Son Güncelleme":st.updatedAt||""
+    };
+  });
+
+  const openingCount=stores.filter(s=>["opening","stocking"].includes(stateOf(s).status)).length;
+  const stockingCount=stores.filter(s=>stateOf(s).status==="stocking").length;
+  const delayedCount=stores.filter(s=>stateOf(s).status==="delayed").length;
+  const notStartedCount=stores.filter(s=>stateOf(s).status==="notstarted").length;
+  const notReceivedCount=stores.filter(s=>stateOf(s).status==="notreceived").length;
+  const unknownCount=stores.filter(s=>stateOf(s).status==="unknown").length;
+
+  const summaryRows=[
+    {"Başlık":"Toplam Mağaza","Adet":stores.length},
+    {"Başlık":"Açılıyor (Raflara Diziyor dahil)","Adet":openingCount},
+    {"Başlık":"Raflara Diziyor","Adet":stockingCount},
+    {"Başlık":"Gecikiyor","Adet":delayedCount},
+    {"Başlık":"İmalat Başlamadı","Adet":notStartedCount},
+    {"Başlık":"Teslim Almadı","Adet":notReceivedCount},
+    {"Başlık":"Henüz Değerlendirilmedi","Adet":unknownCount}
+  ];
+
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.json_to_sheet(rows);
+  const wsSummary=XLSX.utils.json_to_sheet(summaryRows);
+
+  ws["!cols"]=[
+    {wch:12},{wch:14},{wch:28},{wch:30},{wch:20},{wch:38},{wch:20}
+  ];
+  wsSummary["!cols"]=[{wch:38},{wch:12}];
+
+  XLSX.utils.book_append_sheet(wb,ws,"Mağazalar");
+  XLSX.utils.book_append_sheet(wb,wsSummary,"Özet");
+
+  const d=new Date();
+  const pad=n=>String(n).padStart(2,"0");
+  const fileName=`Koru_Florya_Acilis_Takip_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}.xlsx`;
+  XLSX.writeFile(wb,fileName);
+}
+
+$("searchInput").addEventListener("input",render);
+
+loadSourceStores();
+listenCustomStores();
+listenStoreOverrides();
+listenTracking();
+</script>
+</body>
+</html>
