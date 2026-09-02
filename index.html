@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Koru Florya AÃ§Ä±lÄ±ÅŸ Takip V5</title>
+<title>Koru Florya Açılış Takip V5</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
@@ -180,18 +180,18 @@ h1{margin:0;color:#8ff7ff;font-size:clamp(26px,3.2vw,40px)}
   <section class="hero">
     <div class="heroTop">
       <div>
-        <h1>Koru Florya AÃ§Ä±lÄ±ÅŸ Takip</h1>
-        <div class="subtitle">30.08.2026 aÃ§Ä±lÄ±ÅŸ maÄŸazalarÄ± ve sonradan aÃ§Ä±lanlar Â· depolar hariÃ§</div>
+        <h1>Koru Florya Açılış Takip</h1>
+        <div class="subtitle">30.08.2026 açılış mağazaları ve sonradan açılanlar · depolar hariç</div>
       </div>
       <div>
         <div class="topTools">
-          <input id="searchInput" class="search" placeholder="MaÄŸaza veya lot ara...">
+          <input id="searchInput" class="search" placeholder="Mağaza veya lot ara...">
           <button id="adminBtn" class="btn btnAdmin" onclick="loginAdmin()">Admin</button>
-          <button id="manageBtn" class="btn btnBlue hidden" onclick="openAdminModal()">MaÄŸaza YÃ¶netimi</button>
-          <button id="excelBtn" class="btn btnOk hidden" onclick="exportExcel()">Excel Ã‡Ä±ktÄ±sÄ±</button>
-          <button id="logoutBtn" class="btn btnGhost hidden" onclick="logoutAdmin()">Ã‡Ä±kÄ±ÅŸ</button>
+          <button id="manageBtn" class="btn btnBlue hidden" onclick="openAdminModal()">Mağaza Yönetimi</button>
+          <button id="excelBtn" class="btn btnOk hidden" onclick="exportExcel()">Excel Çıktısı</button>
+          <button id="logoutBtn" class="btn btnGhost hidden" onclick="logoutAdmin()">Çıkış</button>
         </div>
-        <div id="syncState" class="sync">BaÄŸlanÄ±yor...</div>
+        <div id="syncState" class="sync">Bağlanıyor...</div>
       </div>
     </div>
   </section>
@@ -199,17 +199,17 @@ h1{margin:0;color:#8ff7ff;font-size:clamp(26px,3.2vw,40px)}
   <div class="controls">
     <label class="toggleLine">
       <input id="showUnnamed" type="checkbox" onchange="render()">
-      Ä°simsiz maÄŸazalarÄ± gÃ¶ster
+      İsimsiz mağazaları göster
     </label>
   </div>
 
   <section class="summary">
     <button class="kpi" onclick="setStatusFilter('ALL')"><b id="kTotal">0</b><span>Toplam</span></button>
-    <button class="kpi launch" onclick="setStatusFilter('openedaug30')"><b id="kAug30">0</b><span>30.08.2026'da AÃ§Ä±lan</span></button>
-    <button class="kpi later" onclick="setStatusFilter('openedlater')"><b id="kLater">0</b><span>EylÃ¼l ve SonrasÄ± AÃ§Ä±lan</span></button>
+    <button class="kpi launch" onclick="setStatusFilter('openedaug30')"><b id="kAug30">0</b><span>30.08.2026'da Açılan</span></button>
+    <button class="kpi later" onclick="setStatusFilter('openedlater')"><b id="kLater">0</b><span>Eylül ve Sonrası Açılan</span></button>
     <button class="kpi delay" onclick="setStatusFilter('delayed')"><b id="kDelay">0</b><span>Gecikiyor</span></button>
-    <button class="kpi notstarted" onclick="setStatusFilter('notstarted')"><b id="kNotStarted">0</b><span>Ä°malat BaÅŸlamadÄ±</span></button>
-    <button class="kpi notreceived" onclick="setStatusFilter('notreceived')"><b id="kNotReceived">0</b><span>Teslim AlmadÄ±</span></button>
+    <button class="kpi notstarted" onclick="setStatusFilter('notstarted')"><b id="kNotStarted">0</b><span>İmalat Başlamadı</span></button>
+    <button class="kpi notreceived" onclick="setStatusFilter('notreceived')"><b id="kNotReceived">0</b><span>Teslim Almadı</span></button>
   </section>
 
   <div id="floorTabs" class="floorTabs"></div>
@@ -219,7 +219,7 @@ h1{margin:0;color:#8ff7ff;font-size:clamp(26px,3.2vw,40px)}
 <div id="adminOverlay" class="modalOverlay">
   <div class="modal">
     <div class="modalHead">
-      <h2>MaÄŸaza YÃ¶netimi</h2>
+      <h2>Mağaza Yönetimi</h2>
       <button class="btn btnGhost" onclick="closeAdminModal()">Kapat</button>
     </div>
 
@@ -227,7 +227,7 @@ h1{margin:0;color:#8ff7ff;font-size:clamp(26px,3.2vw,40px)}
       <div class="field">
         <label>Kat</label>
         <select id="newFloor">
-          <option value="ZEMÄ°N">ZEMÄ°N</option>
+          <option value="ZEMİN">ZEMİN</option>
           <option value="1BK">1BK</option>
           <option value="2BK">2BK</option>
           <option value="3BK">3BK</option>
@@ -239,17 +239,17 @@ h1{margin:0;color:#8ff7ff;font-size:clamp(26px,3.2vw,40px)}
         <input id="newLot" placeholder="Lot no">
       </div>
       <div class="field">
-        <label>MaÄŸaza AdÄ±</label>
-        <input id="newName" placeholder="MaÄŸaza adÄ±">
+        <label>Mağaza Adı</label>
+        <input id="newName" placeholder="Mağaza adı">
       </div>
     </div>
     <div style="margin-top:10px">
-      <button class="btn btnOk" onclick="addStore()">MaÄŸaza Ekle</button>
+      <button class="btn btnOk" onclick="addStore()">Mağaza Ekle</button>
     </div>
 
     <div class="field" style="margin-top:15px">
-      <label>MaÄŸaza Ara</label>
-      <input id="manageSearch" placeholder="MaÄŸaza / lot ara..." oninput="renderAdminList()">
+      <label>Mağaza Ara</label>
+      <input id="manageSearch" placeholder="Mağaza / lot ara..." oninput="renderAdminList()">
     </div>
     <div id="adminManageList" class="adminManageList"></div>
   </div>
@@ -259,7 +259,7 @@ h1{margin:0;color:#8ff7ff;font-size:clamp(26px,3.2vw,40px)}
 <div id="editStoreOverlay" class="modalOverlay">
   <div class="modal">
     <div class="modalHead">
-      <h2>MaÄŸaza Bilgilerini DÃ¼zenle</h2>
+      <h2>Mağaza Bilgilerini Düzenle</h2>
       <button class="btn btnGhost" onclick="closeEditStoreModal()">Kapat</button>
     </div>
 
@@ -269,7 +269,7 @@ h1{margin:0;color:#8ff7ff;font-size:clamp(26px,3.2vw,40px)}
       <div class="field">
         <label>Kat</label>
         <select id="editFloor">
-          <option value="ZEMÄ°N">ZEMÄ°N</option>
+          <option value="ZEMİN">ZEMİN</option>
           <option value="1BK">1BK</option>
           <option value="2BK">2BK</option>
           <option value="3BK">3BK</option>
@@ -281,8 +281,8 @@ h1{margin:0;color:#8ff7ff;font-size:clamp(26px,3.2vw,40px)}
         <input id="editLot" placeholder="Lot no">
       </div>
       <div class="field">
-        <label>MaÄŸaza AdÄ±</label>
-        <input id="editName" placeholder="MaÄŸaza adÄ±">
+        <label>Mağaza Adı</label>
+        <input id="editName" placeholder="Mağaza adı">
       </div>
     </div>
 
@@ -290,19 +290,19 @@ h1{margin:0;color:#8ff7ff;font-size:clamp(26px,3.2vw,40px)}
       <div class="field">
         <label>Durum</label>
         <select id="editStatus" onchange="toggleEditFields()">
-          <option value="unknown">HenÃ¼z deÄŸerlendirilmedi</option>
-          <option value="openedaug30">30.08.2026'da aÃ§Ä±ldÄ±</option>
-          <option value="openedlater">EylÃ¼l ve sonrasÄ±nda aÃ§Ä±ldÄ±</option>
+          <option value="unknown">Henüz değerlendirilmedi</option>
+          <option value="openedaug30">30.08.2026'da açıldı</option>
+          <option value="openedlater">Eylül ve sonrasında açıldı</option>
           <option value="delayed">Gecikiyor</option>
-          <option value="notstarted">Ä°malat baÅŸlamadÄ±</option>
-          <option value="notreceived">Teslim almadÄ±</option>
+          <option value="notstarted">İmalat başlamadı</option>
+          <option value="notreceived">Teslim almadı</option>
         </select>
       </div>
       <div class="field" id="editDelayField">
         <label>Gecikme Tahmini</label>
         <select id="editDelay">
-          <option>1-2 gÃ¼n</option>
-          <option>3-4 gÃ¼n</option>
+          <option>1-2 gün</option>
+          <option>3-4 gün</option>
           <option>1 hafta</option>
           <option>2 hafta</option>
           <option>3 hafta</option>
@@ -311,18 +311,18 @@ h1{margin:0;color:#8ff7ff;font-size:clamp(26px,3.2vw,40px)}
         </select>
       </div>
       <div class="field" id="editOpeningDateField">
-        <label>AÃ§Ä±lÄ±ÅŸ Tarihi</label>
+        <label>Açılış Tarihi</label>
         <input id="editOpeningDate" type="date" min="2026-08-30">
       </div>
       <div class="field">
-        <label>KÄ±sa Not</label>
+        <label>Kısa Not</label>
         <input id="editNote" placeholder="Not">
       </div>
     </div>
 
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
-      <button class="btn btnOk" onclick="saveStoreEdit()">DeÄŸiÅŸiklikleri Kaydet</button>
-      <button class="btn btnDanger" onclick="deleteStoreFromEdit()">MaÄŸazayÄ± Sil</button>
+      <button class="btn btnOk" onclick="saveStoreEdit()">Değişiklikleri Kaydet</button>
+      <button class="btn btnDanger" onclick="deleteStoreFromEdit()">Mağazayı Sil</button>
     </div>
   </div>
 </div>
@@ -354,19 +354,19 @@ const TRACK_COL="opening_readiness_2026";
 const CUSTOM_COL="opening_custom_stores_2026";
 const OVERRIDE_COL="opening_store_overrides_2026";
 const ADMIN_PIN="1234";
-const FLOORS=["ZEMÄ°N","1BK","2BK","3BK","4BK"];
+const FLOORS=["ZEMİN","1BK","2BK","3BK","4BK"];
 const LAUNCH_DATE="2026-08-30";
 
 let sourceStores=[],customStores=[],storeOverrides={},tracking={},adminMode=false,floorFilter="ALL",statusFilter="ALL";
 const $=id=>document.getElementById(id);
 
 function clean(v){return String(v??"").replace(/\s+/g," ").trim()}
-function norm(v){return clean(v).toUpperCase().replace(/Ä°/g,"I").replace(/Ä/g,"G").replace(/Ãœ/g,"U").replace(/Å/g,"S").replace(/Ã–/g,"O").replace(/Ã‡/g,"C")}
+function norm(v){return clean(v).toUpperCase().replace(/İ/g,"I").replace(/Ğ/g,"G").replace(/Ü/g,"U").replace(/Ş/g,"S").replace(/Ö/g,"O").replace(/Ç/g,"C")}
 function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
 function idSafe(v){return norm(v).replace(/[^A-Z0-9]+/g,"_").replace(/^_|_$/g,"")}
 function normalizeFloorName(v){
   const k=norm(v);
-  if(["ZK","ZEMIN","ZEMIN KAT","ZEMIN KATI","0","0K","0BK"].includes(k))return "ZEMÄ°N";
+  if(["ZK","ZEMIN","ZEMIN KAT","ZEMIN KATI","0","0K","0BK"].includes(k))return "ZEMİN";
   if(["B1","1BK","1 BK","1.KAT","1 KAT","BODRUM 1","-1"].includes(k))return "1BK";
   if(["B2","2BK","2 BK","2.KAT","2 KAT","BODRUM 2","-2"].includes(k))return "2BK";
   if(["B3","3BK","3 BK","3.KAT","3 KAT","BODRUM 3","-3"].includes(k))return "3BK";
@@ -376,14 +376,14 @@ function normalizeFloorName(v){
 function pickFirst(x,keys){for(const k of keys){if(x&&x[k]!=null&&clean(x[k]))return clean(x[k])}return ""}
 function isUnnamed(s){return !clean(s.name)||norm(s.name)==="ISIMSIZ MAGAZA"||norm(s.name)==="ISIMSIZ"}
 function isDepotRaw(x,name,lot){
-  const typeText=norm([name,lot,x.type,x.tip,x.tur,x.tÃ¼r,x.category,x.kategori,x.unitType,x.mahalTipi].filter(Boolean).join(" "));
+  const typeText=norm([name,lot,x.type,x.tip,x.tur,x.tür,x.category,x.kategori,x.unitType,x.mahalTipi].filter(Boolean).join(" "));
   return /\bDEPO\b/.test(typeText)||/\bWAREHOUSE\b/.test(typeText)
 }
 function sourceStore(d,id){
   const x=d||{};
-  const kat=normalizeFloorName(pickFirst(x,["kat","Kat","KAT","floor","Floor","FLOOR","sheet","Sheet","SHEET","katAdi","katAdÄ±","katName","blok","seviye","level"]));
-  const lot=pickFirst(x,["lot","Lot","LOT","lotNo","LotNo","LOT NO","LOT_NO","lotNumarasi","lotNumarasÄ±","maÄŸazaNo","magazaNo","depoNo","unitNo","unit","no"]);
-  const name=pickFirst(x,["name","Name","magaza","maÄŸaza","magazaAdi","maÄŸazaAdÄ±","magazaAdÄ±","maÄŸazaAdi","storeName","store","tenant","kiraci","kiracÄ±","MAÄAZA ADI","MAGAZA ADI"]);
+  const kat=normalizeFloorName(pickFirst(x,["kat","Kat","KAT","floor","Floor","FLOOR","sheet","Sheet","SHEET","katAdi","katAdı","katName","blok","seviye","level"]));
+  const lot=pickFirst(x,["lot","Lot","LOT","lotNo","LotNo","LOT NO","LOT_NO","lotNumarasi","lotNumarası","mağazaNo","magazaNo","depoNo","unitNo","unit","no"]);
+  const name=pickFirst(x,["name","Name","magaza","mağaza","magazaAdi","mağazaAdı","magazaAdı","mağazaAdi","storeName","store","tenant","kiraci","kiracı","MAĞAZA ADI","MAGAZA ADI"]);
   if(!name&&!lot)return null;
   if(isDepotRaw(x,name,lot))return null;
   return {id:"src_"+String(id),sourceId:String(id),kat,lot,name,origin:"source"}
@@ -418,8 +418,8 @@ function allStores(){
 }
 function normalizedState(raw){
   const st={status:"unknown",delay:"",note:"",updatedAt:"",openingDate:"",...(raw||{})};
-  // V4 uyumluluÄŸu: AÃ§Ä±lÄ±yor ve Raflara Diziyor olan 85 maÄŸaza,
-  // 30.08.2026 aÃ§Ä±lÄ±ÅŸ grubuna otomatik olarak alÄ±nÄ±r.
+  // V4 uyumluluğu: Açılıyor ve Raflara Diziyor olan 85 mağaza,
+  // 30.08.2026 açılış grubuna otomatik olarak alınır.
   if(st.status==="opening"||st.status==="stocking"){
     st.status="openedaug30";
     st.openingDate=LAUNCH_DATE;
@@ -437,12 +437,12 @@ function formatDateTR(v){
   const [y,m,d]=v.split("-");return `${d}.${m}.${y}`
 }
 function statusText(st){
-  if(st.status==="openedaug30")return "30.08.2026'da aÃ§Ä±ldÄ±";
-  if(st.status==="openedlater")return st.openingDate?formatDateTR(st.openingDate)+" tarihinde aÃ§Ä±ldÄ±":"EylÃ¼l ve sonrasÄ±nda aÃ§Ä±ldÄ±";
-  if(st.status==="delayed")return st.delay?"Gecikiyor Â· "+st.delay:"Gecikiyor";
-  if(st.status==="notstarted")return "Ä°malat baÅŸlamadÄ±";
-  if(st.status==="notreceived")return "Teslim almadÄ±";
-  return "HenÃ¼z deÄŸerlendirilmedi"
+  if(st.status==="openedaug30")return "30.08.2026'da açıldı";
+  if(st.status==="openedlater")return st.openingDate?formatDateTR(st.openingDate)+" tarihinde açıldı":"Eylül ve sonrasında açıldı";
+  if(st.status==="delayed")return st.delay?"Gecikiyor · "+st.delay:"Gecikiyor";
+  if(st.status==="notstarted")return "İmalat başlamadı";
+  if(st.status==="notreceived")return "Teslim almadı";
+  return "Henüz değerlendirilmedi"
 }
 function nowTR(){return new Date().toLocaleString("tr-TR",{dateStyle:"short",timeStyle:"short"})}
 
@@ -452,11 +452,11 @@ async function loadSourceStores(){
     const arr=[];
     snap.forEach(doc=>{const s=sourceStore(doc.data(),doc.id);if(s)arr.push(s)});
     sourceStores=arr;
-    $("syncState").textContent=allStores().length+" maÄŸaza yÃ¼klendi Â· depolar hariÃ§";
+    $("syncState").textContent=allStores().length+" mağaza yüklendi · depolar hariç";
     render()
   }catch(e){
     console.error(e);
-    $("syncState").textContent="Kaynak maÄŸaza listesi okunamadÄ±."
+    $("syncState").textContent="Kaynak mağaza listesi okunamadı."
   }
 }
 function listenCustomStores(){
@@ -531,7 +531,7 @@ function visibleStores(){
 function renderTabs(){
   const present=FLOORS.filter(f=>allStores().some(s=>s.kat===f));
   $("floorTabs").innerHTML=
-    `<button class="floorBtn ${floorFilter==="ALL"?"active":""}" onclick="setFloorFilter('ALL')">TÃ¼m Katlar</button>`+
+    `<button class="floorBtn ${floorFilter==="ALL"?"active":""}" onclick="setFloorFilter('ALL')">Tüm Katlar</button>`+
     present.map(f=>`<button class="floorBtn ${floorFilter===f?"active":""}" onclick="setFloorFilter('${esc(f)}')">${esc(f)}</button>`).join("")
 }
 function renderKpis(){
@@ -545,48 +545,48 @@ function renderKpis(){
 }
 function cardHtml(s){
   const st=stateOf(s);
-  const delayOptions=["1-2 gÃ¼n","3-4 gÃ¼n","1 hafta","2 hafta","3 hafta","1 ay","1 aydan fazla"];
+  const delayOptions=["1-2 gün","3-4 gün","1 hafta","2 hafta","3 hafta","1 ay","1 aydan fazla"];
   return `
   <article class="storeCard ${esc(st.status)}">
     <div class="storeTop">
       <div>
-        <div class="storeName">${esc(s.name||"Ä°simsiz MaÄŸaza")}</div>
-        <div class="meta">${esc(s.kat||"-")} Â· Lot ${esc(s.lot||"-")}</div>
+        <div class="storeName">${esc(s.name||"İsimsiz Mağaza")}</div>
+        <div class="meta">${esc(s.kat||"-")} · Lot ${esc(s.lot||"-")}</div>
       </div>
       ${adminMode?`<div class="cardAdminBtns">
-        <button class="editMini" title="DÃ¼zenle" onclick="openEditStoreModal('${esc(s.id)}')">âœ</button>
-        <button class="deleteMini" title="Sil" onclick="deleteStore('${esc(s.id)}')">âœ•</button>
+        <button class="editMini" title="Düzenle" onclick="openEditStoreModal('${esc(s.id)}')">✎</button>
+        <button class="deleteMini" title="Sil" onclick="deleteStore('${esc(s.id)}')">✕</button>
       </div>`:""}
     </div>
     <div class="stateLine"><span class="statePill ${esc(st.status)}">${esc(statusText(st))}</span></div>
     <div class="actions">
-      <button class="btnLaunch ${st.status==="openedaug30"?"":"inactive"}" onclick="setStoreStatus('${esc(s.id)}','openedaug30')">âœ“ 30 AÄŸustos'ta AÃ§Ä±ldÄ±</button>
-      <button class="btnLater ${st.status==="openedlater"?"":"inactive"}" onclick="setStoreStatus('${esc(s.id)}','openedlater')">âœ“ EylÃ¼l ve SonrasÄ± AÃ§Ä±ldÄ±</button>
+      <button class="btnLaunch ${st.status==="openedaug30"?"":"inactive"}" onclick="setStoreStatus('${esc(s.id)}','openedaug30')">✓ 30 Ağustos'ta Açıldı</button>
+      <button class="btnLater ${st.status==="openedlater"?"":"inactive"}" onclick="setStoreStatus('${esc(s.id)}','openedlater')">✓ Eylül ve Sonrası Açıldı</button>
       <button class="btnDelay ${st.status==="delayed"?"":"inactive"}" onclick="setStoreStatus('${esc(s.id)}','delayed')">! Gecikiyor</button>
-      <button class="btnNotStarted ${st.status==="notstarted"?"":"inactive"}" onclick="setStoreStatus('${esc(s.id)}','notstarted')">Ä°malat BaÅŸlamadÄ±</button>
-      <button class="btnNotReceived ${st.status==="notreceived"?"":"inactive"}" onclick="setStoreStatus('${esc(s.id)}','notreceived')">Teslim AlmadÄ±</button>
+      <button class="btnNotStarted ${st.status==="notstarted"?"":"inactive"}" onclick="setStoreStatus('${esc(s.id)}','notstarted')">İmalat Başlamadı</button>
+      <button class="btnNotReceived ${st.status==="notreceived"?"":"inactive"}" onclick="setStoreStatus('${esc(s.id)}','notreceived')">Teslim Almadı</button>
     </div>
     ${st.status==="delayed"?`
       <div class="delayBox"><select onchange="setDelay('${esc(s.id)}',this.value)">
       ${delayOptions.map(x=>`<option ${st.delay===x?"selected":""}>${x}</option>`).join("")}
       </select></div>`:""}
-    <input class="noteInput" value="${esc(st.note||"")}" placeholder="KÄ±sa not (opsiyonel)" oninput="saveNoteLater('${esc(s.id)}',this.value)">
-    ${st.updatedAt?`<div class="updated">Son gÃ¼ncelleme: ${esc(st.updatedAt)}</div>`:""}
+    <input class="noteInput" value="${esc(st.note||"")}" placeholder="Kısa not (opsiyonel)" oninput="saveNoteLater('${esc(s.id)}',this.value)">
+    ${st.updatedAt?`<div class="updated">Son güncelleme: ${esc(st.updatedAt)}</div>`:""}
   </article>`
 }
 function render(){
   renderTabs();renderKpis();
   const list=visibleStores();
   const groups={};
-  list.forEach(s=>{const k=s.kat||"KAT BÄ°LGÄ°SÄ° YOK";(groups[k]||(groups[k]=[])).push(s)});
+  list.forEach(s=>{const k=s.kat||"KAT BİLGİSİ YOK";(groups[k]||(groups[k]=[])).push(s)});
   const keys=Object.keys(groups).sort((a,b)=>FLOORS.indexOf(a)-FLOORS.indexOf(b));
-  if(!keys.length){$("content").innerHTML='<div class="empty">Bu filtreye uygun maÄŸaza yok.</div>';return}
+  if(!keys.length){$("content").innerHTML='<div class="empty">Bu filtreye uygun mağaza yok.</div>';return}
   $("content").innerHTML=keys.map(f=>{
     const arr=groups[f];
     return `<section class="floorSection">
       <div class="floorHead">
         <h2>${esc(f)}</h2>
-        <div class="floorMeta">${arr.length} maÄŸaza</div>
+        <div class="floorMeta">${arr.length} mağaza</div>
       </div>
       <div class="grid">${arr.map(cardHtml).join("")}</div>
     </section>`
@@ -596,7 +596,7 @@ function render(){
 function loginAdmin(){
   const p=prompt("Admin PIN");
   if(p===null)return;
-  if(p!==ADMIN_PIN)return alert("PIN hatalÄ±.");
+  if(p!==ADMIN_PIN)return alert("PIN hatalı.");
   adminMode=true;
   $("adminBtn").classList.add("hidden");
   $("manageBtn").classList.remove("hidden");
@@ -622,7 +622,7 @@ function closeAdminModal(){$("adminOverlay").classList.remove("show")}
 async function addStore(){
   if(!adminMode)return;
   const kat=$("newFloor").value, lot=clean($("newLot").value), name=clean($("newName").value);
-  if(!kat||!lot||!name)return alert("Kat, lot ve maÄŸaza adÄ± gerekli.");
+  if(!kat||!lot||!name)return alert("Kat, lot ve mağaza adı gerekli.");
   const id="custom_"+idSafe(kat+"_"+lot+"_"+name)+"_"+Date.now();
   await db.collection(CUSTOM_COL).doc(id).set({kat,lot,name,createdAt:nowTR()});
   $("newLot").value="";$("newName").value="";
@@ -631,7 +631,7 @@ async function deleteStore(id){
   if(!adminMode)return;
   const s=allStores().find(x=>x.id===id);
   if(!s)return;
-  if(!confirm((s.name||"Ä°simsiz MaÄŸaza")+" silinsin mi?"))return;
+  if(!confirm((s.name||"İsimsiz Mağaza")+" silinsin mi?"))return;
 
   if(s.origin==="custom"){
     await db.collection(CUSTOM_COL).doc(id).delete();
@@ -653,10 +653,10 @@ function renderAdminList(){
   if(q)arr=arr.filter(s=>norm([s.name,s.lot,s.kat].join(" ")).includes(q));
   el.innerHTML=arr.length?arr.map(s=>`
     <div class="adminManageItem">
-      <div><b>${esc(s.name||"Ä°simsiz MaÄŸaza")}</b><div class="meta">${esc(s.kat||"-")} Â· Lot ${esc(s.lot||"-")}</div></div>
-      <button class="btn btnEdit" onclick="openEditStoreModal('${esc(s.id)}')">DÃ¼zenle</button>
+      <div><b>${esc(s.name||"İsimsiz Mağaza")}</b><div class="meta">${esc(s.kat||"-")} · Lot ${esc(s.lot||"-")}</div></div>
+      <button class="btn btnEdit" onclick="openEditStoreModal('${esc(s.id)}')">Düzenle</button>
       <button class="btn btnDanger" onclick="deleteStore('${esc(s.id)}')">Sil</button>
-    </div>`).join(""):'<div class="empty">MaÄŸaza bulunamadÄ±.</div>'
+    </div>`).join(""):'<div class="empty">Mağaza bulunamadı.</div>'
 }
 
 
@@ -665,7 +665,7 @@ function openEditStoreModal(id){
   const s=allStores().find(x=>x.id===id);
   if(!s)return;
   $("editStoreId").value=s.id;
-  $("editFloor").value=FLOORS.includes(s.kat)?s.kat:"ZEMÄ°N";
+  $("editFloor").value=FLOORS.includes(s.kat)?s.kat:"ZEMİN";
   $("editLot").value=s.lot||"";
   $("editName").value=s.name||"";
   const st=stateOf(s);
@@ -697,7 +697,7 @@ async function saveStoreEdit(){
   const lot=clean($("editLot").value);
   const name=clean($("editName").value);
 
-  if(!kat||!lot||!name)return alert("Kat, lot ve maÄŸaza adÄ± gerekli.");
+  if(!kat||!lot||!name)return alert("Kat, lot ve mağaza adı gerekli.");
 
   if(s.origin==="custom"){
     await db.collection(CUSTOM_COL).doc(id).set({
@@ -715,7 +715,7 @@ async function saveStoreEdit(){
   const note=clean($("editNote").value);
 
   if(status==="openedlater"&&(!openingDate||openingDate<=LAUNCH_DATE)){
-    return alert("EylÃ¼l ve sonrasÄ± aÃ§Ä±lan maÄŸaza iÃ§in 30.08.2026'dan sonraki bir tarih seÃ§in.");
+    return alert("Eylül ve sonrası açılan mağaza için 30.08.2026'dan sonraki bir tarih seçin.");
   }
 
   await db.collection(TRACK_COL).doc(id).set({
@@ -735,7 +735,7 @@ async function deleteStoreFromEdit(){
 function exportExcel(){
   if(!adminMode)return;
   if(typeof XLSX==="undefined"){
-    alert("Excel kÃ¼tÃ¼phanesi yÃ¼klenemedi. Ä°nternet baÄŸlantÄ±sÄ±nÄ± kontrol edin.");
+    alert("Excel kütüphanesi yüklenemedi. İnternet bağlantısını kontrol edin.");
     return;
   }
 
@@ -745,13 +745,13 @@ function exportExcel(){
     return {
       "Kat":s.kat||"",
       "Lot":s.lot||"",
-      "MaÄŸaza AdÄ±":s.name||"Ä°simsiz MaÄŸaza",
+      "Mağaza Adı":s.name||"İsimsiz Mağaza",
       "Durum":statusText(st),
-      "AÃ§Ä±lÄ±ÅŸ Grubu":st.status==="openedaug30"?"30.08.2026 AÃ§Ä±lÄ±ÅŸÄ±":(st.status==="openedlater"?"EylÃ¼l ve SonrasÄ±":""),
-      "AÃ§Ä±lÄ±ÅŸ Tarihi":st.openingDate?formatDateTR(st.openingDate):"",
+      "Açılış Grubu":st.status==="openedaug30"?"30.08.2026 Açılışı":(st.status==="openedlater"?"Eylül ve Sonrası":""),
+      "Açılış Tarihi":st.openingDate?formatDateTR(st.openingDate):"",
       "Gecikme Tahmini":st.status==="delayed"?(st.delay||""):"",
-      "KÄ±sa Not":st.note||"",
-      "Son GÃ¼ncelleme":st.updatedAt||""
+      "Kısa Not":st.note||"",
+      "Son Güncelleme":st.updatedAt||""
     };
   });
 
@@ -763,13 +763,13 @@ function exportExcel(){
   const unknownCount=stores.filter(s=>stateOf(s).status==="unknown").length;
 
   const summaryRows=[
-    {"BaÅŸlÄ±k":"Toplam MaÄŸaza","Adet":stores.length},
-    {"BaÅŸlÄ±k":"30.08.2026'da AÃ§Ä±lan","Adet":aug30Count},
-    {"BaÅŸlÄ±k":"EylÃ¼l ve SonrasÄ± AÃ§Ä±lan","Adet":laterCount},
-    {"BaÅŸlÄ±k":"Gecikiyor","Adet":delayedCount},
-    {"BaÅŸlÄ±k":"Ä°malat BaÅŸlamadÄ±","Adet":notStartedCount},
-    {"BaÅŸlÄ±k":"Teslim AlmadÄ±","Adet":notReceivedCount},
-    {"BaÅŸlÄ±k":"HenÃ¼z DeÄŸerlendirilmedi","Adet":unknownCount}
+    {"Başlık":"Toplam Mağaza","Adet":stores.length},
+    {"Başlık":"30.08.2026'da Açılan","Adet":aug30Count},
+    {"Başlık":"Eylül ve Sonrası Açılan","Adet":laterCount},
+    {"Başlık":"Gecikiyor","Adet":delayedCount},
+    {"Başlık":"İmalat Başlamadı","Adet":notStartedCount},
+    {"Başlık":"Teslim Almadı","Adet":notReceivedCount},
+    {"Başlık":"Henüz Değerlendirilmedi","Adet":unknownCount}
   ];
 
   const wb=XLSX.utils.book_new();
@@ -781,8 +781,8 @@ function exportExcel(){
   ];
   wsSummary["!cols"]=[{wch:38},{wch:12}];
 
-  XLSX.utils.book_append_sheet(wb,ws,"MaÄŸazalar");
-  XLSX.utils.book_append_sheet(wb,wsSummary,"Ã–zet");
+  XLSX.utils.book_append_sheet(wb,ws,"Mağazalar");
+  XLSX.utils.book_append_sheet(wb,wsSummary,"Özet");
 
   const d=new Date();
   const pad=n=>String(n).padStart(2,"0");
