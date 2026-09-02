@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Koru Florya AÃ§Ä±lÄ±ÅŸ Takip V5</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<style>
+:root{
+  --bg:#07131f;--panel:#0d2030;--panel2:#112b3d;--line:rgba(255,255,255,.12);
+  --text:#eef7ff;--muted:#9eb4c5;--green:#4ade80;--blue:#60a5fa;--yellow:#facc15;
+  --orange:#fb923c;--red:#fb7185;--purple:#c084fc;--gray:#64748b;--cyan:#22d3ee;
+  --launch:#4ade80;--later:#38bdf8;
+  --shadow:0 18px 45px rgba(0,0,0,.32)
+}
+*{box-sizing:border-box}
+body{
+  margin:0;min-height:100vh;font-family:Arial,Helvetica,sans-serif;
+  background:radial-gradient(circle at 15% 0%,rgba(34,211,238,.13),transparent 30%),
+             linear-gradient(145deg,#081723,#04101a 68%,#02070b);
+  color:var(--text)
+}
+.wrap{width:min(1500px,calc(100% - 28px));margin:auto;padding:22px 0 46px}
+.hero{
+  border:1px solid rgba(34,211,238,.24);border-radius:24px;padding:20px;
+  background:linear-gradient(135deg,rgba(17,43,61,.96),rgba(5,19,31,.96));box-shadow:var(--shadow)
+}
+.heroTop{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap}
+h1{margin:0;color:#8ff7ff;font-size:clamp(26px,3.2vw,40px)}
+.subtitle{color:#c9d7e2;margin-top:7px;font-weight:700;line-height:1.45}
+.sync{font-size:12px;color:var(--muted);margin-top:8px}
+.topTools{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.search{
+  min-width:min(330px,100%);border:1px solid var(--line);background:#081927;color:#fff;
+  border-radius:13px;padding:12px 14px;font-size:14px;outline:none
+}
+.btn{
+  border:0;border-radius:12px;padding:11px 13px;font-weight:900;cursor:pointer
+}
+.btnAdmin{background:#ffe066;color:#251d00}
+.btnGhost{background:transparent;color:#fff;border:1px solid var(--line)}
+.btnDanger{background:#e11d48;color:#fff}
+.btnOk{background:var(--green);color:#062413}
+.btnBlue{background:var(--blue);color:#071d35}
+.hidden{display:none!important}
+
+.controls{
+  display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;
+  margin:14px 0 8px
+}
+.toggleLine{display:flex;align-items:center;gap:8px;color:#dce8f0;font-weight:900;font-size:13px}
+.toggleLine input{width:18px;height:18px}
+
+.summary{
+  display:grid;grid-template-columns:repeat(6,minmax(135px,1fr));gap:10px;margin:10px 0 14px
+}
+.kpi{
+  border:1px solid var(--line);border-radius:17px;padding:13px 14px;background:rgba(255,255,255,.055);
+  box-shadow:0 10px 24px rgba(0,0,0,.20);cursor:pointer;transition:.15s;color:#fff;text-align:left
+}
+.kpi:hover{transform:translateY(-2px);filter:brightness(1.08)}
+.kpi b{display:block;font-size:28px}
+.kpi span{font-size:11px;font-weight:900;text-transform:uppercase;color:#dce8f0}
+.kpi.launch{border-color:rgba(74,222,128,.50);background:rgba(74,222,128,.12)}
+.kpi.later{border-color:rgba(56,189,248,.52);background:rgba(56,189,248,.12)}
+.kpi.delay{border-color:rgba(251,113,133,.48);background:rgba(251,113,133,.10)}
+.kpi.notstarted{border-color:rgba(250,204,21,.45);background:rgba(250,204,21,.09)}
+.kpi.notreceived{border-color:rgba(192,132,252,.45);background:rgba(192,132,252,.10)}
+
+.floorTabs{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 16px}
+.floorBtn{
+  border:1px solid var(--line);background:#0d2030;color:#dce8f0;border-radius:999px;
+  padding:9px 13px;font-weight:900;cursor:pointer
+}
+.floorBtn.active{background:var(--cyan);color:#03212a;border-color:var(--cyan)}
+
+.floorSection{
+  margin:18px 0 24px;border:1px solid rgba(255,255,255,.11);background:rgba(9,27,41,.76);
+  border-radius:22px;overflow:hidden;box-shadow:var(--shadow)
+}
+.floorHead{
+  display:flex;justify-content:space-between;gap:12px;align-items:center;padding:14px 16px;
+  border-bottom:1px solid var(--line);background:linear-gradient(90deg,rgba(34,211,238,.13),rgba(255,255,255,.02))
+}
+.floorHead h2{margin:0;color:#8ff7ff;font-size:22px}
+.floorMeta{color:var(--muted);font-size:12px;font-weight:800}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(285px,1fr));gap:11px;padding:13px}
+.storeCard{
+  position:relative;border:1px solid var(--line);border-left:8px solid var(--gray);border-radius:17px;
+  padding:13px;background:linear-gradient(145deg,rgba(255,255,255,.06),rgba(0,0,0,.11));min-height:210px
+}
+.storeCard.openedaug30{border-left-color:var(--launch);background:linear-gradient(145deg,rgba(74,222,128,.12),rgba(0,0,0,.11))}
+.storeCard.openedlater{border-left-color:var(--later);background:linear-gradient(145deg,rgba(56,189,248,.13),rgba(0,0,0,.11))}
+.storeCard.delayed{border-left-color:var(--red)}
+.storeCard.notstarted{border-left-color:var(--yellow)}
+.storeCard.notreceived{border-left-color:var(--purple)}
+.storeCard.unknown{border-left-color:var(--gray)}
+.storeTop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.storeName{font-size:18px;font-weight:950;line-height:1.12}
+.meta{color:var(--muted);font-size:12px;font-weight:850;margin-top:5px}
+.cardAdminBtns{display:flex;gap:5px}
+.editMini,.deleteMini{
+  border:0;background:transparent;font-size:16px;cursor:pointer;padding:2px 5px;line-height:1;border-radius:7px
+}
+.editMini{color:#8ff7ff}
+.editMini:hover{background:rgba(34,211,238,.12)}
+.deleteMini{color:#ff9aaa}
+.deleteMini:hover{background:rgba(251,113,133,.12)}
+.stateLine{margin:10px 0 9px}
+.statePill{display:inline-flex;border-radius:999px;padding:6px 9px;font-size:11px;font-weight:950;border:1px solid var(--line)}
+.statePill.openedaug30{background:rgba(74,222,128,.16);color:#bff8d1;border-color:rgba(74,222,128,.42)}
+.statePill.openedlater{background:rgba(56,189,248,.17);color:#d5f2ff;border-color:rgba(56,189,248,.44)}
+.statePill.delayed{background:rgba(251,113,133,.14);color:#ffd1da;border-color:rgba(251,113,133,.38)}
+.statePill.notstarted{background:rgba(250,204,21,.11);color:#fff0a6;border-color:rgba(250,204,21,.30)}
+.statePill.notreceived{background:rgba(192,132,252,.13);color:#edd6ff;border-color:rgba(192,132,252,.34)}
+.statePill.unknown{background:rgba(100,116,139,.16);color:#d9e2ea;border-color:rgba(100,116,139,.30)}
+
+.actions{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:8px}
+.actions button{border:0;border-radius:10px;padding:9px 6px;cursor:pointer;font-size:11px;font-weight:950}
+.btnLaunch{background:var(--launch);color:#062413}
+.btnLater{background:var(--later);color:#071d35}
+.btnDelay{background:var(--red);color:#350711}
+.btnNotStarted{background:var(--yellow);color:#2c2500}
+.btnNotReceived{background:var(--purple);color:#20032f}
+.actions button.inactive{opacity:.36;filter:saturate(.55)}
+.delayBox{margin-top:8px}
+.delayBox select{
+  width:100%;border:1px solid rgba(251,113,133,.32);background:#091925;color:#fff;
+  border-radius:10px;padding:9px 10px;font-weight:800
+}
+.noteInput{
+  width:100%;margin-top:7px;border:1px solid var(--line);background:#081927;color:#fff;
+  border-radius:10px;padding:8px 9px;font-size:12px
+}
+.updated{margin-top:7px;color:#8197a8;font-size:10px;text-align:right}
+.empty{
+  margin:20px 0;padding:25px;text-align:center;border:1px dashed var(--line);
+  border-radius:18px;color:var(--muted);font-weight:900
+}
+
+.modalOverlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;
+  z-index:1000;padding:18px
+}
+.modalOverlay.show{display:flex}
+.modal{
+  width:min(760px,96vw);max-height:90vh;overflow:auto;background:#0d2030;border:1px solid var(--line);
+  border-radius:20px;box-shadow:0 24px 70px rgba(0,0,0,.55);padding:16px
+}
+.modalHead{display:flex;justify-content:space-between;gap:12px;align-items:center;border-bottom:1px solid var(--line);padding-bottom:11px;margin-bottom:14px}
+.modalHead h2{margin:0;color:#8ff7ff}
+.formGrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.field label{display:block;color:var(--muted);font-size:12px;font-weight:900;margin-bottom:6px}
+.field input,.field select{
+  width:100%;border:1px solid var(--line);background:#081927;color:#fff;border-radius:11px;padding:10px
+}
+.adminManageList{display:grid;gap:8px;margin-top:14px;max-height:50vh;overflow:auto}
+.adminManageItem{
+  display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;border:1px solid var(--line);
+  border-radius:12px;padding:10px;background:rgba(255,255,255,.045)
+}
+.btnEdit{background:#22d3ee;color:#03212a}
+
+@media(max-width:1050px){.summary{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:700px){
+  .summary{grid-template-columns:repeat(2,1fr)}
+  .grid{grid-template-columns:1fr;padding:9px}
+  .actions{grid-template-columns:1fr}
+  .formGrid{grid-template-columns:1fr}
+}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+  <section class="hero">
+    <div class="heroTop">
+      <div>
+        <h1>Koru Florya AÃ§Ä±lÄ±ÅŸ Takip</h1>
+        <div class="subtitle">30.08.2026 aÃ§Ä±lÄ±ÅŸ maÄŸazalarÄ± ve sonradan aÃ§Ä±lanlar Â· depolar hariÃ§</div>
+      </div>
+      <div>
+        <div class="topTools">
+          <input id="searchInput" class="search" placeholder="MaÄŸaza veya lot ara...">
+          <button id="adminBtn" class="btn btnAdmin" onclick="loginAdmin()">Admin</button>
+          <button id="manageBtn" class="btn btnBlue hidden" onclick="openAdminModal()">MaÄŸaza YÃ¶netimi</button>
+          <button id="excelBtn" class="btn btnOk hidden" onclick="exportExcel()">Excel Ã‡Ä±ktÄ±sÄ±</button>
+          <button id="logoutBtn" class="btn btnGhost hidden" onclick="logoutAdmin()">Ã‡Ä±kÄ±ÅŸ</button>
+        </div>
+        <div id="syncState" class="sync">BaÄŸlanÄ±yor...</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="controls">
+    <label class="toggleLine">
+      <input id="showUnnamed" type="checkbox" onchange="render()">
+      Ä°simsiz maÄŸazalarÄ± gÃ¶ster
+    </label>
+  </div>
+
+  <section class="summary">
+    <button class="kpi" onclick="setStatusFilter('ALL')"><b id="kTotal">0</b><span>Toplam</span></button>
+    <button class="kpi launch" onclick="setStatusFilter('openedaug30')"><b id="kAug30">0</b><span>30.08.2026'da AÃ§Ä±lan</span></button>
+    <button class="kpi later" onclick="setStatusFilter('openedlater')"><b id="kLater">0</b><span>EylÃ¼l ve SonrasÄ± AÃ§Ä±lan</span></button>
+    <button class="kpi delay" onclick="setStatusFilter('delayed')"><b id="kDelay">0</b><span>Gecikiyor</span></button>
+    <button class="kpi notstarted" onclick="setStatusFilter('notstarted')"><b id="kNotStarted">0</b><span>Ä°malat BaÅŸlamadÄ±</span></button>
+    <button class="kpi notreceived" onclick="setStatusFilter('notreceived')"><b id="kNotReceived">0</b><span>Teslim AlmadÄ±</span></button>
+  </section>
+
+  <div id="floorTabs" class="floorTabs"></div>
+  <div id="content"></div>
+</div>
+
+<div id="adminOverlay" class="modalOverlay">
+  <div class="modal">
+    <div class="modalHead">
+      <h2>MaÄŸaza YÃ¶netimi</h2>
+      <button class="btn btnGhost" onclick="closeAdminModal()">Kapat</button>
+    </div>
+
+    <div class="formGrid">
+      <div class="field">
+        <label>Kat</label>
+        <select id="newFloor">
+          <option value="ZEMÄ°N">ZEMÄ°N</option>
+          <option value="1BK">1BK</option>
+          <option value="2BK">2BK</option>
+          <option value="3BK">3BK</option>
+          <option value="4BK">4BK</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Lot</label>
+        <input id="newLot" placeholder="Lot no">
+      </div>
+      <div class="field">
+        <label>MaÄŸaza AdÄ±</label>
+        <input id="newName" placeholder="MaÄŸaza adÄ±">
+      </div>
+    </div>
+    <div style="margin-top:10px">
+      <button class="btn btnOk" onclick="addStore()">MaÄŸaza Ekle</button>
+    </div>
+
+    <div class="field" style="margin-top:15px">
+      <label>MaÄŸaza Ara</label>
+      <input id="manageSearch" placeholder="MaÄŸaza / lot ara..." oninput="renderAdminList()">
+    </div>
+    <div id="adminManageList" class="adminManageList"></div>
+  </div>
+</div>
+
+
+<div id="editStoreOverlay" class="modalOverlay">
+  <div class="modal">
+    <div class="modalHead">
+      <h2>MaÄŸaza Bilgilerini DÃ¼zenle</h2>
+      <button class="btn btnGhost" onclick="closeEditStoreModal()">Kapat</button>
+    </div>
+
+    <input id="editStoreId" type="hidden">
+
+    <div class="formGrid">
+      <div class="field">
+        <label>Kat</label>
+        <select id="editFloor">
+          <option value="ZEMÄ°N">ZEMÄ°N</option>
+          <option value="1BK">1BK</option>
+          <option value="2BK">2BK</option>
+          <option value="3BK">3BK</option>
+          <option value="4BK">4BK</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Lot</label>
+        <input id="editLot" placeholder="Lot no">
+      </div>
+      <div class="field">
+        <label>MaÄŸaza AdÄ±</label>
+        <input id="editName" placeholder="MaÄŸaza adÄ±">
+      </div>
+    </div>
+
+    <div class="formGrid" style="margin-top:10px">
+      <div class="field">
+        <label>Durum</label>
+        <select id="editStatus" onchange="toggleEditFields()">
+          <option value="unknown">HenÃ¼z deÄŸerlendirilmedi</option>
+          <option value="openedaug30">30.08.2026'da aÃ§Ä±ldÄ±</option>
+          <option value="openedlater">EylÃ¼l ve sonrasÄ±nda aÃ§Ä±ldÄ±</option>
+          <option value="delayed">Gecikiyor</option>
+          <option value="notstarted">Ä°malat baÅŸlamadÄ±</option>
+          <option value="notreceived">Teslim almadÄ±</option>
+        </select>
+      </div>
+      <div class="field" id="editDelayField">
+        <label>Gecikme Tahmini</label>
+        <select id="editDelay">
+          <option>1-2 gÃ¼n</option>
+          <option>3-4 gÃ¼n</option>
+          <option>1 hafta</option>
+          <option>2 hafta</option>
+          <option>3 hafta</option>
+          <option>1 ay</option>
+          <option>1 aydan fazla</option>
+        </select>
+      </div>
+      <div class="field" id="editOpeningDateField">
+        <label>AÃ§Ä±lÄ±ÅŸ Tarihi</label>
+        <input id="editOpeningDate" type="date" min="2026-08-30">
+      </div>
+      <div class="field">
+        <label>KÄ±sa Not</label>
+        <input id="editNote" placeholder="Not">
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+      <button class="btn btnOk" onclick="saveStoreEdit()">DeÄŸiÅŸiklikleri Kaydet</button>
+      <button class="btn btnDanger" onclick="deleteStoreFromEdit()">MaÄŸazayÄ± Sil</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const firebaseConfig={
+  apiKey:"AIzaSyCfzjZTi-4nbiPmByAzEn5XRIqarWheT0k",
+  authDomain:"fire-f6f25.firebaseapp.com",
+  projectId:"fire-f6f25",
+  storageBucket:"fire-f6f25.firebasestorage.app",
+  messagingSenderId:"313570540415",
+  appId:"1:313570540415:web:3842e615c142da9fa0f84a"
+};
+const sourceFirebaseConfig={
+  apiKey:"AIzaSyDFflfD15ScmCWLD2pmt2fqMamnV6Fjup4",
+  authDomain:"raportakip-10cfc.firebaseapp.com",
+  projectId:"raportakip-10cfc",
+  storageBucket:"raportakip-10cfc.firebasestorage.app",
+  messagingSenderId:"250817491437",
+  appId:"1:250817491437:web:3ca15f873b0e80c3d737e4"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db=firebase.firestore();
+const sourceApp=firebase.initializeApp(sourceFirebaseConfig,"sourceStoresApp");
+const sourceDb=firebase.firestore(sourceApp);
+
+const TRACK_COL="opening_readiness_2026";
+const CUSTOM_COL="opening_custom_stores_2026";
+const OVERRIDE_COL="opening_store_overrides_2026";
+const ADMIN_PIN="1234";
+const FLOORS=["ZEMÄ°N","1BK","2BK","3BK","4BK"];
+const LAUNCH_DATE="2026-08-30";
+
+let sourceStores=[],customStores=[],storeOverrides={},tracking={},adminMode=false,floorFilter="ALL",statusFilter="ALL";
+const $=id=>document.getElementById(id);
+
+function clean(v){return String(v??"").replace(/\s+/g," ").trim()}
+function norm(v){return clean(v).toUpperCase().replace(/Ä°/g,"I").replace(/Ä/g,"G").replace(/Ãœ/g,"U").replace(/Å/g,"S").replace(/Ã–/g,"O").replace(/Ã‡/g,"C")}
+function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+function idSafe(v){return norm(v).replace(/[^A-Z0-9]+/g,"_").replace(/^_|_$/g,"")}
+function normalizeFloorName(v){
+  const k=norm(v);
+  if(["ZK","ZEMIN","ZEMIN KAT","ZEMIN KATI","0","0K","0BK"].includes(k))return "ZEMÄ°N";
+  if(["B1","1BK","1 BK","1.KAT","1 KAT","BODRUM 1","-1"].includes(k))return "1BK";
+  if(["B2","2BK","2 BK","2.KAT","2 KAT","BODRUM 2","-2"].includes(k))return "2BK";
+  if(["B3","3BK","3 BK","3.KAT","3 KAT","BODRUM 3","-3"].includes(k))return "3BK";
+  if(["B4","4BK","4 BK","4.KAT","4 KAT","BODRUM 4","-4"].includes(k))return "4BK";
+  return clean(v)
+}
+function pickFirst(x,keys){for(const k of keys){if(x&&x[k]!=null&&clean(x[k]))return clean(x[k])}return ""}
+function isUnnamed(s){return !clean(s.name)||norm(s.name)==="ISIMSIZ MAGAZA"||norm(s.name)==="ISIMSIZ"}
+function isDepotRaw(x,name,lot){
+  const typeText=norm([name,lot,x.type,x.tip,x.tur,x.tÃ¼r,x.category,x.kategori,x.unitType,x.mahalTipi].filter(Boolean).join(" "));
+  return /\bDEPO\b/.test(typeText)||/\bWAREHOUSE\b/.test(typeText)
+}
+function sourceStore(d,id){
+  const x=d||{};
+  const kat=normalizeFloorName(pickFirst(x,["kat","Kat","KAT","floor","Floor","FLOOR","sheet","Sheet","SHEET","katAdi","katAdÄ±","katName","blok","seviye","level"]));
+  const lot=pickFirst(x,["lot","Lot","LOT","lotNo","LotNo","LOT NO","LOT_NO","lotNumarasi","lotNumarasÄ±","maÄŸazaNo","magazaNo","depoNo","unitNo","unit","no"]);
+  const name=pickFirst(x,["name","Name","magaza","maÄŸaza","magazaAdi","maÄŸazaAdÄ±","magazaAdÄ±","maÄŸazaAdi","storeName","store","tenant","kiraci","kiracÄ±","MAÄAZA ADI","MAGAZA ADI"]);
+  if(!name&&!lot)return null;
+  if(isDepotRaw(x,name,lot))return null;
+  return {id:"src_"+String(id),sourceId:String(id),kat,lot,name,origin:"source"}
+}
+function allStores(){
+  const arr=[];
+
+  for(const src of sourceStores){
+    const ov=storeOverrides[src.id]||{};
+    if(ov.deleted===true)continue;
+    arr.push({
+      ...src,
+      kat:ov.kat!=null?normalizeFloorName(ov.kat):src.kat,
+      lot:ov.lot!=null?clean(ov.lot):src.lot,
+      name:ov.name!=null?clean(ov.name):src.name
+    });
+  }
+
+  for(const c of customStores){
+    if(c.deleted===true)continue;
+    arr.push(c);
+  }
+
+  return arr.sort((a,b)=>{
+    const fa=FLOORS.indexOf(a.kat), fb=FLOORS.indexOf(b.kat);
+    const f=(fa<0?999:fa)-(fb<0?999:fb);
+    if(f)return f;
+    const n=(a.name||"").localeCompare(b.name||"","tr",{numeric:true,sensitivity:"base"});
+    if(n)return n;
+    return (a.lot||"").localeCompare(b.lot||"","tr",{numeric:true});
+  });
+}
+function normalizedState(raw){
+  const st={status:"unknown",delay:"",note:"",updatedAt:"",openingDate:"",...(raw||{})};
+  // V4 uyumluluÄŸu: AÃ§Ä±lÄ±yor ve Raflara Diziyor olan 85 maÄŸaza,
+  // 30.08.2026 aÃ§Ä±lÄ±ÅŸ grubuna otomatik olarak alÄ±nÄ±r.
+  if(st.status==="opening"||st.status==="stocking"){
+    st.status="openedaug30";
+    st.openingDate=LAUNCH_DATE;
+  }
+  if(st.status==="openedaug30"&&!st.openingDate)st.openingDate=LAUNCH_DATE;
+  return st
+}
+function stateOf(s){return normalizedState(tracking[s.id])}
+function todayISO(){
+  const d=new Date(),pad=n=>String(n).padStart(2,"0");
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`
+}
+function formatDateTR(v){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(v||""))return "";
+  const [y,m,d]=v.split("-");return `${d}.${m}.${y}`
+}
+function statusText(st){
+  if(st.status==="openedaug30")return "30.08.2026'da aÃ§Ä±ldÄ±";
+  if(st.status==="openedlater")return st.openingDate?formatDateTR(st.openingDate)+" tarihinde aÃ§Ä±ldÄ±":"EylÃ¼l ve sonrasÄ±nda aÃ§Ä±ldÄ±";
+  if(st.status==="delayed")return st.delay?"Gecikiyor Â· "+st.delay:"Gecikiyor";
+  if(st.status==="notstarted")return "Ä°malat baÅŸlamadÄ±";
+  if(st.status==="notreceived")return "Teslim almadÄ±";
+  return "HenÃ¼z deÄŸerlendirilmedi"
+}
+function nowTR(){return new Date().toLocaleString("tr-TR",{dateStyle:"short",timeStyle:"short"})}
+
+async function loadSourceStores(){
+  try{
+    const snap=await sourceDb.collection("stores").get();
+    const arr=[];
+    snap.forEach(doc=>{const s=sourceStore(doc.data(),doc.id);if(s)arr.push(s)});
+    sourceStores=arr;
+    $("syncState").textContent=allStores().length+" maÄŸaza yÃ¼klendi Â· depolar hariÃ§";
+    render()
+  }catch(e){
+    console.error(e);
+    $("syncState").textContent="Kaynak maÄŸaza listesi okunamadÄ±."
+  }
+}
+function listenCustomStores(){
+  db.collection(CUSTOM_COL).onSnapshot(snap=>{
+    customStores=[];
+    snap.forEach(doc=>{
+      const d=doc.data()||{};
+      customStores.push({id:doc.id,kat:normalizeFloorName(d.kat||""),lot:clean(d.lot||""),name:clean(d.name||""),origin:"custom"})
+    });
+    render();renderAdminList()
+  })
+}
+
+function listenStoreOverrides(){
+  db.collection(OVERRIDE_COL).onSnapshot(snap=>{
+    storeOverrides={};
+    snap.forEach(doc=>storeOverrides[doc.id]={id:doc.id,...doc.data()});
+    render();
+    renderAdminList();
+  })
+}
+
+function listenTracking(){
+  db.collection(TRACK_COL).onSnapshot(snap=>{
+    tracking={};
+    snap.forEach(doc=>tracking[doc.id]={id:doc.id,...doc.data()});
+    render()
+  })
+}
+
+async function setStoreStatus(id,status){
+  const old=normalizedState(tracking[id]);
+  const isOpen=status==="openedaug30"||status==="openedlater";
+  const openingDate=status==="openedaug30"?LAUNCH_DATE:(status==="openedlater"?(old.status==="openedlater"&&old.openingDate?old.openingDate:todayISO()):"");
+  const payload={status,delay:status==="delayed"?(old.delay||"1 hafta"):"",note:old.note||"",openingDate:isOpen?openingDate:"",updatedAt:nowTR()};
+  tracking[id]={...old,...payload};render();
+  try{await db.collection(TRACK_COL).doc(id).set(payload,{merge:true})}
+  catch(e){console.error(e);alert("Durum kaydedilemedi.")}
+}
+async function setDelay(id,value){
+  const old=tracking[id]||{};
+  const payload={status:"delayed",delay:value,note:old.note||"",updatedAt:nowTR()};
+  tracking[id]={...old,...payload};render();
+  try{await db.collection(TRACK_COL).doc(id).set(payload,{merge:true})}
+  catch(e){console.error(e)}
+}
+let noteTimers={};
+function saveNoteLater(id,value){
+  tracking[id]={...(tracking[id]||{}),note:value};
+  clearTimeout(noteTimers[id]);
+  noteTimers[id]=setTimeout(async()=>{
+    const old=normalizedState(tracking[id]);
+    await db.collection(TRACK_COL).doc(id).set({
+      status:old.status||"unknown",delay:old.delay||"",note:value,openingDate:old.openingDate||"",updatedAt:nowTR()
+    },{merge:true})
+  },500)
+}
+
+function setFloorFilter(v){floorFilter=v;render()}
+function setStatusFilter(v){statusFilter=v;render()}
+function visibleStores(){
+  const q=norm($("searchInput").value||"");
+  const showUnnamed=$("showUnnamed").checked;
+  return allStores().filter(s=>{
+    if(!showUnnamed&&isUnnamed(s))return false;
+    if(floorFilter!=="ALL"&&s.kat!==floorFilter)return false;
+    if(statusFilter!=="ALL"&&stateOf(s).status!==statusFilter)return false;
+    if(q&&!norm([s.name,s.lot,s.kat].join(" ")).includes(q))return false;
+    return true
+  })
+}
+function renderTabs(){
+  const present=FLOORS.filter(f=>allStores().some(s=>s.kat===f));
+  $("floorTabs").innerHTML=
+    `<button class="floorBtn ${floorFilter==="ALL"?"active":""}" onclick="setFloorFilter('ALL')">TÃ¼m Katlar</button>`+
+    present.map(f=>`<button class="floorBtn ${floorFilter===f?"active":""}" onclick="setFloorFilter('${esc(f)}')">${esc(f)}</button>`).join("")
+}
+function renderKpis(){
+  const arr=allStores().filter(s=>$("showUnnamed").checked||!isUnnamed(s));
+  $("kTotal").textContent=arr.length;
+  $("kAug30").textContent=arr.filter(s=>stateOf(s).status==="openedaug30").length;
+  $("kLater").textContent=arr.filter(s=>stateOf(s).status==="openedlater").length;
+  $("kDelay").textContent=arr.filter(s=>stateOf(s).status==="delayed").length;
+  $("kNotStarted").textContent=arr.filter(s=>stateOf(s).status==="notstarted").length;
+  $("kNotReceived").textContent=arr.filter(s=>stateOf(s).status==="notreceived").length
+}
+function cardHtml(s){
+  const st=stateOf(s);
+  const delayOptions=["1-2 gÃ¼n","3-4 gÃ¼n","1 hafta","2 hafta","3 hafta","1 ay","1 aydan fazla"];
+  return `
+  <article class="storeCard ${esc(st.status)}">
+    <div class="storeTop">
+      <div>
+        <div class="storeName">${esc(s.name||"Ä°simsiz MaÄŸaza")}</div>
+        <div class="meta">${esc(s.kat||"-")} Â· Lot ${esc(s.lot||"-")}</div>
+      </div>
+      ${adminMode?`<div class="cardAdminBtns">
+        <button class="editMini" title="DÃ¼zenle" onclick="openEditStoreModal('${esc(s.id)}')">âœ</button>
+        <button class="deleteMini" title="Sil" onclick="deleteStore('${esc(s.id)}')">âœ•</button>
+      </div>`:""}
+    </div>
+    <div class="stateLine"><span class="statePill ${esc(st.status)}">${esc(statusText(st))}</span></div>
+    <div class="actions">
+      <button class="btnLaunch ${st.status==="openedaug30"?"":"inactive"}" onclick="setStoreStatus('${esc(s.id)}','openedaug30')">âœ“ 30 AÄŸustos'ta AÃ§Ä±ldÄ±</button>
+      <button class="btnLater ${st.status==="openedlater"?"":"inactive"}" onclick="setStoreStatus('${esc(s.id)}','openedlater')">âœ“ EylÃ¼l ve SonrasÄ± AÃ§Ä±ldÄ±</button>
+      <button class="btnDelay ${st.status==="delayed"?"":"inactive"}" onclick="setStoreStatus('${esc(s.id)}','delayed')">! Gecikiyor</button>
+      <button class="btnNotStarted ${st.status==="notstarted"?"":"inactive"}" onclick="setStoreStatus('${esc(s.id)}','notstarted')">Ä°malat BaÅŸlamadÄ±</button>
+      <button class="btnNotReceived ${st.status==="notreceived"?"":"inactive"}" onclick="setStoreStatus('${esc(s.id)}','notreceived')">Teslim AlmadÄ±</button>
+    </div>
+    ${st.status==="delayed"?`
+      <div class="delayBox"><select onchange="setDelay('${esc(s.id)}',this.value)">
+      ${delayOptions.map(x=>`<option ${st.delay===x?"selected":""}>${x}</option>`).join("")}
+      </select></div>`:""}
+    <input class="noteInput" value="${esc(st.note||"")}" placeholder="KÄ±sa not (opsiyonel)" oninput="saveNoteLater('${esc(s.id)}',this.value)">
+    ${st.updatedAt?`<div class="updated">Son gÃ¼ncelleme: ${esc(st.updatedAt)}</div>`:""}
+  </article>`
+}
+function render(){
+  renderTabs();renderKpis();
+  const list=visibleStores();
+  const groups={};
+  list.forEach(s=>{const k=s.kat||"KAT BÄ°LGÄ°SÄ° YOK";(groups[k]||(groups[k]=[])).push(s)});
+  const keys=Object.keys(groups).sort((a,b)=>FLOORS.indexOf(a)-FLOORS.indexOf(b));
+  if(!keys.length){$("content").innerHTML='<div class="empty">Bu filtreye uygun maÄŸaza yok.</div>';return}
+  $("content").innerHTML=keys.map(f=>{
+    const arr=groups[f];
+    return `<section class="floorSection">
+      <div class="floorHead">
+        <h2>${esc(f)}</h2>
+        <div class="floorMeta">${arr.length} maÄŸaza</div>
+      </div>
+      <div class="grid">${arr.map(cardHtml).join("")}</div>
+    </section>`
+  }).join("")
+}
+
+function loginAdmin(){
+  const p=prompt("Admin PIN");
+  if(p===null)return;
+  if(p!==ADMIN_PIN)return alert("PIN hatalÄ±.");
+  adminMode=true;
+  $("adminBtn").classList.add("hidden");
+  $("manageBtn").classList.remove("hidden");
+  $("excelBtn").classList.remove("hidden");
+  $("logoutBtn").classList.remove("hidden");
+  render()
+}
+function logoutAdmin(){
+  adminMode=false;
+  $("adminBtn").classList.remove("hidden");
+  $("manageBtn").classList.add("hidden");
+  $("excelBtn").classList.add("hidden");
+  $("logoutBtn").classList.add("hidden");
+  closeAdminModal();render()
+}
+function openAdminModal(){
+  if(!adminMode)return;
+  $("adminOverlay").classList.add("show");
+  renderAdminList()
+}
+function closeAdminModal(){$("adminOverlay").classList.remove("show")}
+
+async function addStore(){
+  if(!adminMode)return;
+  const kat=$("newFloor").value, lot=clean($("newLot").value), name=clean($("newName").value);
+  if(!kat||!lot||!name)return alert("Kat, lot ve maÄŸaza adÄ± gerekli.");
+  const id="custom_"+idSafe(kat+"_"+lot+"_"+name)+"_"+Date.now();
+  await db.collection(CUSTOM_COL).doc(id).set({kat,lot,name,createdAt:nowTR()});
+  $("newLot").value="";$("newName").value="";
+}
+async function deleteStore(id){
+  if(!adminMode)return;
+  const s=allStores().find(x=>x.id===id);
+  if(!s)return;
+  if(!confirm((s.name||"Ä°simsiz MaÄŸaza")+" silinsin mi?"))return;
+
+  if(s.origin==="custom"){
+    await db.collection(CUSTOM_COL).doc(id).delete();
+    await db.collection(TRACK_COL).doc(id).delete().catch(()=>{});
+  }else{
+    await db.collection(OVERRIDE_COL).doc(id).set({
+      deleted:true,
+      updatedAt:nowTR()
+    },{merge:true});
+  }
+  closeEditStoreModal();
+}
+
+function renderAdminList(){
+  const el=$("adminManageList");
+  if(!el)return;
+  const q=norm($("manageSearch").value||"");
+  let arr=allStores();
+  if(q)arr=arr.filter(s=>norm([s.name,s.lot,s.kat].join(" ")).includes(q));
+  el.innerHTML=arr.length?arr.map(s=>`
+    <div class="adminManageItem">
+      <div><b>${esc(s.name||"Ä°simsiz MaÄŸaza")}</b><div class="meta">${esc(s.kat||"-")} Â· Lot ${esc(s.lot||"-")}</div></div>
+      <button class="btn btnEdit" onclick="openEditStoreModal('${esc(s.id)}')">DÃ¼zenle</button>
+      <button class="btn btnDanger" onclick="deleteStore('${esc(s.id)}')">Sil</button>
+    </div>`).join(""):'<div class="empty">MaÄŸaza bulunamadÄ±.</div>'
+}
+
+
+function openEditStoreModal(id){
+  if(!adminMode)return;
+  const s=allStores().find(x=>x.id===id);
+  if(!s)return;
+  $("editStoreId").value=s.id;
+  $("editFloor").value=FLOORS.includes(s.kat)?s.kat:"ZEMÄ°N";
+  $("editLot").value=s.lot||"";
+  $("editName").value=s.name||"";
+  const st=stateOf(s);
+  $("editStatus").value=st.status||"unknown";
+  $("editDelay").value=st.delay||"1 hafta";
+  $("editOpeningDate").value=st.openingDate||(st.status==="openedaug30"?LAUNCH_DATE:todayISO());
+  $("editNote").value=st.note||"";
+  toggleEditFields();
+  $("editStoreOverlay").classList.add("show");
+}
+function closeEditStoreModal(){
+  $("editStoreOverlay").classList.remove("show");
+  $("editStoreId").value="";
+}
+function toggleEditFields(){
+  const status=$("editStatus").value;
+  $("editDelayField").style.display=status==="delayed"?"block":"none";
+  $("editOpeningDateField").style.display=(status==="openedaug30"||status==="openedlater")?"block":"none";
+  if(status==="openedaug30")$("editOpeningDate").value=LAUNCH_DATE;
+  if(status==="openedlater"&&(!$("editOpeningDate").value||$("editOpeningDate").value===LAUNCH_DATE))$("editOpeningDate").value=todayISO();
+}
+async function saveStoreEdit(){
+  if(!adminMode)return;
+  const id=$("editStoreId").value;
+  const s=allStores().find(x=>x.id===id);
+  if(!s)return;
+
+  const kat=$("editFloor").value;
+  const lot=clean($("editLot").value);
+  const name=clean($("editName").value);
+
+  if(!kat||!lot||!name)return alert("Kat, lot ve maÄŸaza adÄ± gerekli.");
+
+  if(s.origin==="custom"){
+    await db.collection(CUSTOM_COL).doc(id).set({
+      kat,lot,name,updatedAt:nowTR()
+    },{merge:true});
+  }else{
+    await db.collection(OVERRIDE_COL).doc(id).set({
+      kat,lot,name,deleted:false,updatedAt:nowTR()
+    },{merge:true});
+  }
+
+  const status=$("editStatus").value||"unknown";
+  const delay=status==="delayed"?$("editDelay").value:"";
+  const openingDate=status==="openedaug30"?LAUNCH_DATE:(status==="openedlater"?$("editOpeningDate").value:"");
+  const note=clean($("editNote").value);
+
+  if(status==="openedlater"&&(!openingDate||openingDate<=LAUNCH_DATE)){
+    return alert("EylÃ¼l ve sonrasÄ± aÃ§Ä±lan maÄŸaza iÃ§in 30.08.2026'dan sonraki bir tarih seÃ§in.");
+  }
+
+  await db.collection(TRACK_COL).doc(id).set({
+    status,delay,note,openingDate,updatedAt:nowTR()
+  },{merge:true});
+
+  tracking[id]={...(tracking[id]||{}),status,delay,note,openingDate,updatedAt:nowTR()};
+  closeEditStoreModal();
+  render();
+}
+async function deleteStoreFromEdit(){
+  const id=$("editStoreId").value;
+  if(id)await deleteStore(id);
+}
+
+
+function exportExcel(){
+  if(!adminMode)return;
+  if(typeof XLSX==="undefined"){
+    alert("Excel kÃ¼tÃ¼phanesi yÃ¼klenemedi. Ä°nternet baÄŸlantÄ±sÄ±nÄ± kontrol edin.");
+    return;
+  }
+
+  const stores=allStores();
+  const rows=stores.map(s=>{
+    const st=stateOf(s);
+    return {
+      "Kat":s.kat||"",
+      "Lot":s.lot||"",
+      "MaÄŸaza AdÄ±":s.name||"Ä°simsiz MaÄŸaza",
+      "Durum":statusText(st),
+      "AÃ§Ä±lÄ±ÅŸ Grubu":st.status==="openedaug30"?"30.08.2026 AÃ§Ä±lÄ±ÅŸÄ±":(st.status==="openedlater"?"EylÃ¼l ve SonrasÄ±":""),
+      "AÃ§Ä±lÄ±ÅŸ Tarihi":st.openingDate?formatDateTR(st.openingDate):"",
+      "Gecikme Tahmini":st.status==="delayed"?(st.delay||""):"",
+      "KÄ±sa Not":st.note||"",
+      "Son GÃ¼ncelleme":st.updatedAt||""
+    };
+  });
+
+  const aug30Count=stores.filter(s=>stateOf(s).status==="openedaug30").length;
+  const laterCount=stores.filter(s=>stateOf(s).status==="openedlater").length;
+  const delayedCount=stores.filter(s=>stateOf(s).status==="delayed").length;
+  const notStartedCount=stores.filter(s=>stateOf(s).status==="notstarted").length;
+  const notReceivedCount=stores.filter(s=>stateOf(s).status==="notreceived").length;
+  const unknownCount=stores.filter(s=>stateOf(s).status==="unknown").length;
+
+  const summaryRows=[
+    {"BaÅŸlÄ±k":"Toplam MaÄŸaza","Adet":stores.length},
+    {"BaÅŸlÄ±k":"30.08.2026'da AÃ§Ä±lan","Adet":aug30Count},
+    {"BaÅŸlÄ±k":"EylÃ¼l ve SonrasÄ± AÃ§Ä±lan","Adet":laterCount},
+    {"BaÅŸlÄ±k":"Gecikiyor","Adet":delayedCount},
+    {"BaÅŸlÄ±k":"Ä°malat BaÅŸlamadÄ±","Adet":notStartedCount},
+    {"BaÅŸlÄ±k":"Teslim AlmadÄ±","Adet":notReceivedCount},
+    {"BaÅŸlÄ±k":"HenÃ¼z DeÄŸerlendirilmedi","Adet":unknownCount}
+  ];
+
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.json_to_sheet(rows);
+  const wsSummary=XLSX.utils.json_to_sheet(summaryRows);
+
+  ws["!cols"]=[
+    {wch:12},{wch:14},{wch:28},{wch:30},{wch:24},{wch:16},{wch:20},{wch:38},{wch:20}
+  ];
+  wsSummary["!cols"]=[{wch:38},{wch:12}];
+
+  XLSX.utils.book_append_sheet(wb,ws,"MaÄŸazalar");
+  XLSX.utils.book_append_sheet(wb,wsSummary,"Ã–zet");
+
+  const d=new Date();
+  const pad=n=>String(n).padStart(2,"0");
+  const fileName=`Koru_Florya_Acilis_Takip_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}.xlsx`;
+  XLSX.writeFile(wb,fileName);
+}
+
+$("searchInput").addEventListener("input",render);
+
+loadSourceStores();
+listenCustomStores();
+listenStoreOverrides();
+listenTracking();
+</script>
+</body>
+</html>
